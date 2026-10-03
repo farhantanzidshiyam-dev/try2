@@ -802,6 +802,100 @@
     .invoice-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .invoice-empty i { font-size: 32px; color: var(--border-strong); margin-bottom: 10px; display: block; pointer-events: none; }
 
+    /* ---- Friendly invoice item row ---- */
+    .invoice-items-table tbody tr { transition: background 0.15s; }
+    .invoice-items-table tbody tr:focus-within { background: var(--primary-light); }
+    .invoice-items-table tbody tr.item-filled td { background: rgba(26,127,55,0.04); }
+    .invoice-items-table .row-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--panel-alt); color: var(--muted);
+      font-size: 10px; font-weight: 700; border: 1px solid var(--border);
+    }
+    .invoice-items-table tbody tr:focus-within .row-num {
+      background: var(--primary); color: #fff; border-color: var(--primary);
+    }
+    .invoice-items-table .remove-item { opacity: 0.55; }
+    .invoice-items-table tbody tr:hover .remove-item { opacity: 1; }
+
+    .item-name-wrap { position: relative; }
+    .item-suggest {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--panel); border: 1px solid var(--primary);
+      border-radius: 0 0 6px 6px; box-shadow: var(--shadow-md);
+      max-height: 220px; overflow-y: auto; z-index: 60; display: none;
+    }
+    .item-suggest.open { display: block; }
+    .item-suggest-item {
+      padding: 8px 10px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid var(--border); display: flex;
+      justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .item-suggest-item:last-child { border-bottom: none; }
+    .item-suggest-item:hover, .item-suggest-item.hl { background: var(--primary-light); }
+    .item-suggest-item .is-name { font-weight: 600; color: var(--text); }
+    .item-suggest-item .is-meta { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .quick-chip {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      background: var(--panel-alt); color: var(--muted);
+      border: 1px solid var(--border); border-radius: 20px;
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+      max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .quick-chip:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    .invoice-helper-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-top: 6px;
+      font-size: 11px; color: var(--muted);
+    }
+    .invoice-helper-bar i { color: var(--primary); }
+
+    /* ---- Preview modal ---- */
+    .inv-prev-frame {
+      border: 1px solid var(--border); border-radius: 8px;
+      background: #fff; color: #1f2328; padding: 22px 26px;
+      max-height: 62vh; overflow-y: auto; font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    body.dark-mode .inv-prev-frame { background: #ffffff; color: #1f2328; }
+    .inv-prev-actions {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;
+      padding: 14px 0 0; margin-top: 14px; border-top: 1px dashed var(--border);
+    }
+    .inv-prev-hint {
+      font-size: 12px; color: var(--muted); margin-right: auto;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .inv-prev-hint i { color: var(--primary); }
+
+    /* ---- Verified stamp (public view only) ---- */
+    .verified-stamp-host { position: relative; }
+    .verified-stamp {
+      position: absolute;
+      top: 30px;
+      right: 24px;
+      width: 190px;
+      height: 190px;
+      pointer-events: none;
+      transform: rotate(-16deg);
+      opacity: 0.88;
+      z-index: 5;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+      animation: stampIn 0.5s cubic-bezier(.2,.8,.2,1.1) both;
+    }
+    @keyframes stampIn {
+      0% { transform: rotate(-16deg) scale(2.2); opacity: 0; }
+      70% { transform: rotate(-16deg) scale(0.94); opacity: 0.95; }
+      100% { transform: rotate(-16deg) scale(1); opacity: 0.88; }
+    }
+    .verified-stamp svg { width: 100%; height: 100%; display: block; }
+    .verified-stamp text { font-family: 'Georgia', 'Times New Roman', serif; }
+    @media (max-width: 640px) {
+      .verified-stamp { width: 130px; height: 130px; top: 16px; right: 12px; }
+    }
+
     .print-area { display: none; }
     @media print {
       @page { margin: 10mm; size: A4; }
@@ -1139,9 +1233,18 @@
                 <tbody id="invoiceItemsBody"></tbody>
               </table>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" id="addInvoiceItemBtn" style="margin-top:8px;">
-              <i class="fas fa-plus"></i> Add Item
-            </button>
+            <div class="invoice-helper-bar">
+              <span><i class="fas fa-lightbulb"></i> Tip: start typing a product name — past items will be suggested with price auto-filled.</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+              <button type="button" class="btn btn-outline btn-sm" id="addInvoiceItemBtn">
+                <i class="fas fa-plus"></i> Add Item
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="addInvoiceItemEnterBtn" title="Add item row (Alt+N)">
+                <i class="fas fa-keyboard"></i> Add Row
+              </button>
+            </div>
+            <div class="quick-chips" id="quickProductChips"></div>
           </div>
 
           <div class="invoice-totals">
@@ -1941,6 +2044,7 @@
             return inv;
           });
           lastPushedInvoiceHash = JSON.stringify(invoices);
+          try { rebuildProductIndex(); } catch (e) {}
         } else {
           customers = []; invoices = [];
           await cloudPush(true);
@@ -3358,6 +3462,67 @@
       }
     }
 
+    /* ---------- Product index for autocomplete / corner highlight ---------- */
+    let productIndex = [];           // [{ name, lastPrice, lastDiscount, count }]
+    function rebuildProductIndex() {
+      const map = new Map();
+      // Build from invoices (line items)
+      invoices.forEach(inv => {
+        (inv.items || []).forEach(it => {
+          const nm = (it.name || '').trim();
+          if (!nm) return;
+          const key = nm.toLowerCase();
+          const rec = map.get(key) || { name: nm, lastPrice: 0, lastDiscount: 0, count: 0, lastUsed: 0 };
+          rec.count += 1;
+          const t = new Date(inv.updatedAt || inv.createdAt || 0).getTime() || 0;
+          if (t >= rec.lastUsed) {
+            rec.lastUsed = t;
+            rec.name = nm;
+            rec.lastPrice = Number(it.price) || 0;
+            rec.lastDiscount = Number(it.discount) || 0;
+          }
+          map.set(key, rec);
+        });
+      });
+      productIndex = Array.from(map.values()).sort((a, b) => b.count - a.count);
+      renderQuickProductChips();
+    }
+
+    function lookupProducts(query, limit) {
+      const q = (query || '').trim().toLowerCase();
+      if (!q) return [];
+      const starts = [], contains = [];
+      productIndex.forEach(p => {
+        const nm = p.name.toLowerCase();
+        if (nm.startsWith(q)) starts.push(p);
+        else if (nm.includes(q)) contains.push(p);
+      });
+      return [...starts, ...contains].slice(0, limit || 8);
+    }
+
+    function renderQuickProductChips() {
+      const wrap = document.getElementById('quickProductChips');
+      if (!wrap) return;
+      const top = productIndex.slice(0, 6);
+      if (top.length === 0) { wrap.innerHTML = ''; return; }
+      wrap.innerHTML = top.map(p =>
+        `<button type="button" class="quick-chip" data-chip="${escapeHtml(p.name)}" title="${escapeHtml(p.name)} — last price ${formatMoneyOrZero(p.lastPrice)}">${escapeHtml(p.name)}</button>`
+      ).join('');
+      wrap.querySelectorAll('[data-chip]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const nm = btn.dataset.chip;
+          const p = productIndex.find(x => x.name.toLowerCase() === nm.toLowerCase());
+          addInvoiceItemRow({
+            name: nm,
+            qty: 1,
+            price: p ? p.lastPrice : 0,
+            discount: p ? p.lastDiscount : 0
+          });
+        });
+      });
+    }
+
+    /* ---------- Render invoice items (friendly) ---------- */
     function renderInvoiceItems() {
       const tbody = document.getElementById('invoiceItemsBody');
       if (!tbody) return;
@@ -3371,21 +3536,31 @@
         const qtyVal = (it.qty === 0 || it.qty === '' || it.qty === undefined || it.qty === null) ? '' : it.qty;
         const priceVal = (it.price === 0 || it.price === '' || it.price === undefined || it.price === null) ? '' : it.price;
         const discVal = (it.discount === 0 || it.discount === '' || it.discount === undefined || it.discount === null) ? '' : it.discount;
+        const filled = (it.name && String(it.name).trim() !== '') ? ' item-filled' : '';
+        tr.className = filled.trim();
         tr.innerHTML = `
-          <td style="text-align:center;color:var(--muted);font-weight:600;padding:8px 4px;">${idx + 1}</td>
-          <td><input type="text" data-field="name" data-idx="${idx}" value="${escapeHtml(it.name || '')}" placeholder="Item description..."></td>
+          <td style="text-align:center;padding:6px 4px;"><span class="row-num">${idx + 1}</span></td>
+          <td>
+            <div class="item-name-wrap">
+              <input type="text" data-field="name" data-idx="${idx}" value="${escapeHtml(it.name || '')}"
+                     placeholder="Type product name…" autocomplete="off" spellcheck="false">
+              <div class="item-suggest" data-suggest-for="${idx}"></div>
+            </div>
+          </td>
           <td class="center"><input type="number" min="0" step="1" data-field="qty" data-idx="${idx}" value="${qtyVal}" placeholder="0"></td>
           <td class="right"><input type="number" min="0" step="1" data-field="price" data-idx="${idx}" value="${priceVal}" placeholder="0"></td>
           <td class="right"><input type="number" min="0" step="1" data-field="discount" data-idx="${idx}" value="${discVal}" placeholder="0"></td>
           <td class="item-total">${formatMoneyOrZero(calcInvoiceItemTotal(it))}</td>
           <td style="text-align:center;">
-            <button type="button" class="remove-item" data-remove="${idx}" title="Remove item">
+            <button type="button" class="remove-item" data-remove="${idx}" title="Remove item (Alt+D)">
               <i class="fas fa-times"></i>
             </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      // ----- input wiring -----
       tbody.querySelectorAll('input[data-field]').forEach(inp => {
         inp.addEventListener('input', (e) => {
           const idx = parseInt(e.target.dataset.idx, 10);
@@ -3400,10 +3575,54 @@
           if (tr) {
             const totalCell = tr.querySelector('.item-total');
             if (totalCell) totalCell.textContent = formatMoneyOrZero(calcInvoiceItemTotal(invoiceWorkingItems[idx]));
+            if (field === 'name') {
+              tr.classList.toggle('item-filled', String(e.target.value || '').trim() !== '');
+            }
           }
           updateInvoiceTotals();
+          if (field === 'name') showItemSuggestions(idx, e.target.value);
+        });
+
+        inp.addEventListener('focus', (e) => {
+          const idx = parseInt(e.target.dataset.idx, 10);
+          if (e.target.dataset.field === 'name') {
+            showItemSuggestions(idx, e.target.value);
+            if (!e.target.value) e.target.select();
+          } else {
+            e.target.select();
+          }
+        });
+
+        inp.addEventListener('keydown', (e) => {
+          const field = e.target.dataset.field;
+          const idx = parseInt(e.target.dataset.idx, 10);
+          if (field === 'name') {
+            const dd = tbody.querySelector(`.item-suggest[data-suggest-for="${idx}"]`);
+            if (dd && dd.classList.contains('open')) {
+              const items = dd.querySelectorAll('.item-suggest-item');
+              let hl = -1;
+              items.forEach((el, i) => { if (el.classList.contains('hl')) hl = i; });
+              if (e.key === 'ArrowDown') { e.preventDefault(); hl = (hl + 1) % items.length; items.forEach((el, i) => el.classList.toggle('hl', i === hl)); return; }
+              if (e.key === 'ArrowUp')   { e.preventDefault(); hl = hl <= 0 ? items.length - 1 : hl - 1; items.forEach((el, i) => el.classList.toggle('hl', i === hl)); return; }
+              if (e.key === 'Enter' && hl >= 0) { e.preventDefault(); items[hl].dispatchEvent(new MouseEvent('mousedown')); return; }
+              if (e.key === 'Escape') { dd.classList.remove('open'); return; }
+            }
+          }
+          if (e.key === 'Enter' && field !== 'name') {
+            e.preventDefault();
+            const row = e.target.closest('tr');
+            const rowInputs = [...row.querySelectorAll('input[data-field]')];
+            const at = rowInputs.indexOf(e.target);
+            if (at < rowInputs.length - 1) {
+              rowInputs[at + 1].focus();
+            } else {
+              addInvoiceItemRow();
+            }
+          }
         });
       });
+
+      // remove buttons
       tbody.querySelectorAll('[data-remove]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const idx = parseInt(btn.dataset.remove, 10);
@@ -3415,12 +3634,79 @@
       });
     }
 
-    function addInvoiceItemRow() {
-      invoiceWorkingItems.push({ name: '', qty: 0, price: 0, discount: 0 });
+    /* ---------- Corner highlight suggestion dropdown ---------- */
+    function showItemSuggestions(idx, query) {
+      const dd = document.querySelector(`.item-suggest[data-suggest-for="${idx}"]`);
+      if (!dd) return;
+      const matches = lookupProducts(query, 8);
+      if (matches.length === 0) {
+        dd.classList.remove('open');
+        dd.innerHTML = '';
+        return;
+      }
+      dd.innerHTML = matches.map((p, i) => `
+        <div class="item-suggest-item" data-idx="${i}" data-name="${escapeHtml(p.name)}" data-price="${p.lastPrice}" data-discount="${p.lastDiscount}">
+          <span class="is-name">${escapeHtml(p.name)}</span>
+          <span class="is-meta">৳ ${formatMoneyOrZero(p.lastPrice)} · ×${p.count}</span>
+        </div>
+      `).join('');
+      dd.classList.add('open');
+      dd.querySelectorAll('.item-suggest-item').forEach(el => {
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const nm = el.dataset.name;
+          const price = Number(el.dataset.price) || 0;
+          const discount = Number(el.dataset.discount) || 0;
+          if (!invoiceWorkingItems[idx]) invoiceWorkingItems[idx] = { name:'', qty:0, price:0, discount:0 };
+          invoiceWorkingItems[idx].name = nm;
+          invoiceWorkingItems[idx].price = price;
+          invoiceWorkingItems[idx].discount = discount;
+          if (!invoiceWorkingItems[idx].qty || invoiceWorkingItems[idx].qty <= 0) invoiceWorkingItems[idx].qty = 1;
+          const nameInp = document.querySelector(`#invoiceItemsBody input[data-field="name"][data-idx="${idx}"]`);
+          if (nameInp) {
+            const row = nameInp.closest('tr');
+            row.querySelector('input[data-field="name"]').value = nm;
+            const qtyInp = row.querySelector('input[data-field="qty"]');
+            const priceInp = row.querySelector('input[data-field="price"]');
+            const discInp = row.querySelector('input[data-field="discount"]');
+            if (qtyInp) qtyInp.value = invoiceWorkingItems[idx].qty;
+            if (priceInp) priceInp.value = price;
+            if (discInp) discInp.value = discount;
+            row.querySelector('.item-total').textContent = formatMoneyOrZero(calcInvoiceItemTotal(invoiceWorkingItems[idx]));
+            row.classList.add('item-filled');
+            dd.classList.remove('open');
+            updateInvoiceTotals();
+            if (qtyInp) qtyInp.focus();
+          }
+        });
+      });
+    }
+
+    // Hide suggestion dropdowns when clicking elsewhere
+    document.addEventListener('mousedown', (e) => {
+      document.querySelectorAll('.item-suggest.open').forEach(dd => {
+        if (!dd.parentElement.contains(e.target)) dd.classList.remove('open');
+      });
+    });
+
+    /* ---------- Add row ---------- */
+    function addInvoiceItemRow(preset) {
+      const item = preset
+        ? { name: preset.name || '', qty: preset.qty || 1, price: preset.price || 0, discount: preset.discount || 0 }
+        : { name: '', qty: 0, price: 0, discount: 0 };
+      invoiceWorkingItems.push(item);
       renderInvoiceItems();
       updateInvoiceTotals();
       const inputs = document.querySelectorAll('#invoiceItemsBody input[data-field="name"]');
-      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+      if (inputs.length > 0) {
+        const last = inputs[inputs.length - 1];
+        last.focus();
+        if (item.name) {
+          const tr = last.closest('tr');
+          const qty = tr.querySelector('input[data-field="qty"]');
+          if (qty) qty.focus();
+        }
+      }
     }
 
     function openInvoiceForm(invoiceToEdit) {
@@ -3429,6 +3715,7 @@
       if (!panel) return;
       panel.classList.add('visible');
       invoiceFormVisible = true;
+      rebuildProductIndex();
 
       if (invoiceToEdit) {
         editingInvoiceId = invoiceToEdit.id;
@@ -3546,19 +3833,18 @@
       }
     }
 
-    function saveInvoiceAndPrint(shouldPrint) {
-      if (!currentUser) { showToast('Please login first.', 'warning'); return; }
+    function buildInvoiceObjectFromForm() {
       const name = document.getElementById('invCustomerName').value.trim();
-      if (!name) { showToast('Customer name is required.', 'error'); return; }
+      if (!name) { showToast('Customer name is required.', 'error'); return null; }
       const validItems = invoiceWorkingItems.filter(it => (it.name || '').trim() !== '' || (Number(it.price) || 0) > 0);
-      if (validItems.length === 0) { showToast('Add at least one item.', 'error'); return; }
+      if (validItems.length === 0) { showToast('Add at least one item.', 'error'); return null; }
       const totals = getInvoiceTotals();
       const invNum = document.getElementById('invNumber').value;
       const dateISO = document.getElementById('invDate').value || todayISO();
       const custName = titleCase(name);
       const discountValueNum = Number(document.getElementById('invDiscountValue').value) || 0;
       const paidNum = Number(document.getElementById('invPaidAmount').value) || 0;
-      const invoiceObj = {
+      return {
         id: editingInvoiceId || generateId(),
         invoiceNumber: invNum,
         dateISO: dateISO,
@@ -3590,6 +3876,9 @@
         createdAt: editingInvoiceId ? (invoices.find(i => i.id === editingInvoiceId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+    }
+
+    function persistInvoiceObject(invoiceObj) {
       if (editingInvoiceId) {
         const idx = invoices.findIndex(i => i.id === editingInvoiceId);
         if (idx >= 0) invoices[idx] = invoiceObj;
@@ -3599,11 +3888,58 @@
       }
       if (typeof cloudSchedule === 'function') cloudSchedule();
       publishInvoicePublic(invoiceObj).catch(err => console.warn('Publish failed:', err));
-      showToast('✅ Invoice ' + invNum + ' saved', 'success');
-      closeInvoiceForm();
-      if (shouldPrint) {
-        setTimeout(() => printInvoice(invoiceObj.id), 200);
+      showToast('✅ Invoice ' + invoiceObj.invoiceNumber + ' saved', 'success');
+    }
+
+    /**
+     * Save invoice. If shouldPrint, show a preview modal first,
+     * then print upon confirmation.
+     */
+    function saveInvoiceAndPrint(shouldPrint) {
+      if (!currentUser) { showToast('Please login first.', 'warning'); return; }
+      const invoiceObj = buildInvoiceObjectFromForm();
+      if (!invoiceObj) return;
+
+      if (!shouldPrint) {
+        persistInvoiceObject(invoiceObj);
+        closeInvoiceForm();
+        return;
       }
+
+      // ----- Preview before print -----
+      const publicUrl = buildInvoicePublicUrl(invoiceObj);
+      const qrSvg = generateQRSVG(publicUrl, 120);
+      const previewHTML = `
+        <div class="inv-prev-frame">
+          ${buildInvoicePrintHTML(invoiceObj, qrSvg, publicUrl)}
+        </div>
+        <div class="inv-prev-actions">
+          <span class="inv-prev-hint"><i class="fas fa-eye"></i> Review the invoice above, then confirm to save &amp; print.</span>
+          <button class="btn" id="invPrevCancelBtn"><i class="fas fa-arrow-left"></i> Back to Edit</button>
+          <button class="btn btn-outline" id="invPrevSaveOnlyBtn"><i class="fas fa-save"></i> Save Without Printing</button>
+          <button class="btn btn-success" id="invPrevConfirmPrintBtn"><i class="fas fa-print"></i> Confirm &amp; Print</button>
+        </div>
+      `;
+      openModal('Preview Invoice — ' + invoiceObj.invoiceNumber, previewHTML, '', true);
+
+      document.getElementById('invPrevCancelBtn').addEventListener('click', closeModal);
+
+      document.getElementById('invPrevSaveOnlyBtn').addEventListener('click', () => {
+        persistInvoiceObject(invoiceObj);
+        closeModal();
+        closeInvoiceForm();
+      });
+
+      document.getElementById('invPrevConfirmPrintBtn').addEventListener('click', () => {
+        persistInvoiceObject(invoiceObj);
+        closeModal();
+        closeInvoiceForm();
+        setTimeout(() => {
+          const finalQr = generateQRSVG(publicUrl, 130);
+          const html = buildInvoicePrintHTML(invoiceObj, finalQr, publicUrl);
+          triggerPrint(html);
+        }, 220);
+      });
     }
 
     function setupInvoiceAutocomplete() {
@@ -4283,6 +4619,84 @@
           </div>
         </div>
       `;
+
+      // Inject verified stamp styles once
+      if (!document.getElementById('verifiedStampStyles')) {
+        const st = document.createElement('style');
+        st.id = 'verifiedStampStyles';
+        st.textContent = `
+          .verified-stamp-host { position: relative; }
+          .verified-stamp {
+            position: absolute;
+            top: 30px;
+            right: 24px;
+            width: 190px;
+            height: 190px;
+            pointer-events: none;
+            transform: rotate(-16deg);
+            opacity: 0.88;
+            z-index: 5;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+            animation: stampIn 0.5s cubic-bezier(.2,.8,.2,1.1) both;
+          }
+          @keyframes stampIn {
+            0% { transform: rotate(-16deg) scale(2.2); opacity: 0; }
+            70% { transform: rotate(-16deg) scale(0.94); opacity: 0.95; }
+            100% { transform: rotate(-16deg) scale(1); opacity: 0.88; }
+          }
+          .verified-stamp svg { width: 100%; height: 100%; display: block; }
+          .verified-stamp text { font-family: 'Georgia', 'Times New Roman', serif; }
+          @media (max-width: 640px) {
+            .verified-stamp { width: 130px; height: 130px; top: 16px; right: 12px; }
+          }
+        `;
+        document.head.appendChild(st);
+      }
+
+      // Build SVG stamp markup (deep-green double ring)
+      const stampSVG = `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <path id="stampTopArc" d="M 28,100 A 72,72 0 0 1 172,100" />
+            <path id="stampBottomArc" d="M 172,100 A 72,72 0 0 1 28,100" />
+          </defs>
+          <circle cx="100" cy="100" r="95" fill="none" stroke="#1a7f37" stroke-width="3.5" opacity="0.85"/>
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#1a7f37" stroke-width="1.6" opacity="0.85"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#1a7f37" stroke-width="2.4" opacity="0.85"/>
+          <text fill="#1a7f37" font-size="13" font-weight="700" letter-spacing="3.5">
+            <textPath href="#stampTopArc" startOffset="50%" text-anchor="middle">ROZA GIFT CORNER &amp; ELECTRIC</textPath>
+          </text>
+          <text fill="#1a7f37" font-size="11" font-weight="600" letter-spacing="3">
+            <textPath href="#stampBottomArc" startOffset="50%" text-anchor="middle">✓ INVOICE VERIFIED ✓</textPath>
+          </text>
+          <path d="M 66,102 L 88,124 L 138,74" fill="none" stroke="#1a7f37" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="100" y="52" text-anchor="middle" fill="#1a7f37" font-size="12" font-weight="700">★</text>
+          <text x="100" y="158" text-anchor="middle" fill="#1a7f37" font-size="12" font-weight="700">★</text>
+        </svg>
+      `;
+
+      // Append stamp to the invoice card
+      const card = container.querySelector('div[style*="border-radius:12px"]');
+      if (card) {
+        card.classList.add('verified-stamp-host');
+        const stampWrap = document.createElement('div');
+        stampWrap.className = 'verified-stamp';
+        stampWrap.setAttribute('aria-label', 'Verified invoice stamp');
+        stampWrap.innerHTML = stampSVG;
+        card.appendChild(stampWrap);
+      }
+
+      // Also add a small "Verified" chip beneath the invoice header for extra clarity
+      const statusHost = container.querySelector('div[style*="border-bottom:1px solid var(--border);display:grid"]');
+      if (statusHost) {
+        const chip = document.createElement('div');
+        chip.style.cssText = 'grid-column:1/-1;margin-top:6px;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#1a7f37;text-transform:uppercase;letter-spacing:0.6px;';
+        chip.innerHTML = `
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#1a7f37;color:#fff;font-size:10px;">✓</span>
+          Verified by RGCE SparkDesk
+        `;
+        statusHost.appendChild(chip);
+      }
     }
 
     function checkPublicInvoiceView() {
@@ -4902,7 +5316,9 @@
       const cancelInvBtn = document.getElementById('cancelInvoiceFormBtn');
       if (cancelInvBtn) cancelInvBtn.addEventListener('click', closeInvoiceForm);
       const addItemBtn = document.getElementById('addInvoiceItemBtn');
-      if (addItemBtn) addItemBtn.addEventListener('click', addInvoiceItemRow);
+      if (addItemBtn) addItemBtn.addEventListener('click', () => addInvoiceItemRow());
+      const addItemEnterBtn = document.getElementById('addInvoiceItemEnterBtn');
+      if (addItemEnterBtn) addItemEnterBtn.addEventListener('click', () => addInvoiceItemRow());
       const saveInvBtn = document.getElementById('saveInvoiceBtn');
       if (saveInvBtn) saveInvBtn.addEventListener('click', () => saveInvoiceAndPrint(false));
       const saveAndPrintBtn = document.getElementById('saveAndPrintInvoiceBtn');
@@ -5043,6 +5459,26 @@
         });
       }
 
+      /* Invoice-form keyboard shortcuts (Alt+N = new row, Alt+D = delete last row, Ctrl+Enter = preview+print) */
+      document.addEventListener('keydown', (e) => {
+        const invPanel = document.getElementById('invoiceFormPanel');
+        if (!invPanel || !invPanel.classList.contains('visible')) return;
+        if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+          e.preventDefault();
+          addInvoiceItemRow();
+        } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+          e.preventDefault();
+          if (invoiceWorkingItems.length > 1) {
+            invoiceWorkingItems.pop();
+            renderInvoiceItems();
+            updateInvoiceTotals();
+          }
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          saveInvoiceAndPrint(true);
+        }
+      });
+
       /* Global Enter key handler */
       document.addEventListener('keydown', function(e) {
         if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -5076,7 +5512,6 @@
         showToast('Welcome to Roza Gift Corner & Electric', 'info');
       }, 800);
 
-      // Focus email field on login screen
       const emailField = document.getElementById('authEmail');
       if (emailField && document.getElementById('authOverlay').style.display !== 'none') {
         setTimeout(() => emailField.focus(), 250);
