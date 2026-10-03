@@ -4541,17 +4541,12 @@
 
       const statusColor = inv.status === 'Paid' ? '#1a7f37' : (inv.status === 'Partial' ? '#bf8700' : '#cf222e');
 
-      // Simple VERIFIED stamp (SVG)
-      const stampSVG = `
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="100" r="94" fill="none" stroke="#1a7f37" stroke-width="4" opacity="0.9"/>
-          <circle cx="100" cy="100" r="84" fill="none" stroke="#1a7f37" stroke-width="1.8" opacity="0.9"/>
-          <text x="100" y="115" text-anchor="middle" fill="#1a7f37"
-                font-family="Georgia, 'Times New Roman', serif"
-                font-size="26" font-weight="800" letter-spacing="2">VERIFIED</text>
-          <path d="M 60,150 L 90,175 L 145,110" fill="none" stroke="#1a7f37" stroke-width="7"
-                stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
-        </svg>
+            // Verified stamp image loaded from the same folder as this app
+      const STAMP_IMAGE_FILE = "seal-verified.jpg";
+      const stampImgHTML = `
+        <img src="${STAMP_IMAGE_FILE}" alt="Verified Stamp"
+             style="width:100%;height:100%;object-fit:contain;display:block;"
+             onerror="this.style.display='none';">
       `;
 
       container.innerHTML = `
@@ -4635,8 +4630,8 @@
 
                 <!-- STAMP (left free space, opposite the totals) -->
                 <div style="flex:0 0 150px;display:flex;align-items:center;justify-content:center;">
-                  <div class="verified-stamp-box">
-                    ${stampSVG}
+                                    <div class="verified-stamp-box">
+                    ${stampImgHTML}
                   </div>
                 </div>
 
