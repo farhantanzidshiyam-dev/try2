@@ -802,7 +802,6 @@
     .invoice-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .invoice-empty i { font-size: 32px; color: var(--border-strong); margin-bottom: 10px; display: block; pointer-events: none; }
 
-    /* ---- Friendly invoice item row ---- */
     .invoice-items-table tbody tr { transition: background 0.15s; }
     .invoice-items-table tbody tr:focus-within { background: var(--primary-light); }
     .invoice-items-table tbody tr.item-filled td { background: rgba(26,127,55,0.04); }
@@ -853,7 +852,6 @@
     }
     .invoice-helper-bar i { color: var(--primary); }
 
-    /* ---- Preview modal ---- */
     .inv-prev-frame {
       border: 1px solid var(--border); border-radius: 8px;
       background: #fff; color: #1f2328; padding: 22px 26px;
@@ -870,7 +868,6 @@
     }
     .inv-prev-hint i { color: var(--primary); }
 
-    /* ---- Public verified stamp box ---- */
     .verified-stamp-box {
       width: 150px;
       height: 150px;
@@ -889,19 +886,113 @@
       .verified-stamp-box { width: 110px; height: 110px; }
     }
 
+    /* ===== PRINT ENGINE — Modern Corporate ===== */
     .print-area { display: none; }
+    #printMeasure {
+      position: fixed; left: -99999px; top: 0;
+      width: 190mm; visibility: hidden;
+      pointer-events: none; z-index: -1;
+    }
+    .print-stack { display: block; }
+    .auto-page {
+      width: 190mm; height: 275mm;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      font-family: 'Segoe UI','Helvetica Neue',Arial,sans-serif;
+      font-size: 11px; line-height: 1.35; color: #000; background: #fff;
+    }
+    .auto-page .ap-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .auto-page .ap-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 14px; padding-bottom: 4px; border-bottom: 1.5px solid #000;
+      margin-bottom: 8px; flex: 0 0 auto;
+    }
+    .auto-page .ap-brand { font-weight: 800; font-size: 14px; line-height: 1.1; color: #000; }
+    .auto-page .ap-brand-meta { font-size: 9.5px; line-height: 1.35; margin-top: 2px; color: #333; }
+    .auto-page .ap-title { font-weight: 800; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; text-align: right; line-height: 1.1; }
+    .auto-page .ap-meta { font-size: 9.5px; text-align: right; margin-top: 2px; line-height: 1.35; }
+    .auto-page .ap-info { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; flex: 0 0 auto; }
+    .auto-page .ap-info-label { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; display: block; margin-bottom: 2px; color: #333; }
+    .auto-page .ap-info-value { font-size: 10.5px; line-height: 1.35; }
+    .auto-page .ap-section {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.7px; margin: 4px 0 4px; padding-bottom: 2px;
+      border-bottom: 1px solid #000; flex: 0 0 auto;
+    }
+    .auto-page .ap-table-wrap { flex: 1 1 auto; min-height: 0; display: block; }
+    .auto-page .ap-table-wrap.nofill { flex: none; }
+    .auto-page table.ap-table, .auto-page table.ap-plain {
+      width: 100%; border-collapse: collapse; table-layout: fixed;
+    }
+    .auto-page .ap-table th, .auto-page .ap-plain th {
+      font-weight: 800; font-size: 9px; text-transform: uppercase;
+      letter-spacing: 0.4px; padding: 4px 6px; border: 1px solid #000;
+      text-align: left; line-height: 1.15;
+    }
+    .auto-page .ap-table td, .auto-page .ap-plain td {
+      font-size: 10px; padding: 4px 6px; border: 1px solid #000;
+      vertical-align: middle; line-height: 1.3; overflow-wrap: anywhere;
+    }
+    .auto-page .ap-table tr, .auto-page .ap-plain tr { break-inside: avoid; }
+    .auto-page .center { text-align: center; }
+    .auto-page .right { text-align: right; }
+    .auto-page .bold { font-weight: 700; }
+    .auto-page .ap-table tr.fill td { padding: 0; line-height: 0; font-size: 0; border-top: 0; }
+    .auto-page .ap-plain { margin-top: 6px; flex: 0 0 auto; }
+    .auto-page .ap-totals {
+      width: 100%; max-width: 320px; margin-left: auto; margin-top: 8px;
+      font-size: 10px; flex: 0 0 auto; border-collapse: collapse;
+    }
+    .auto-page .ap-totals td { padding: 3px 6px; border-bottom: 1px dotted #000; }
+    .auto-page .ap-totals td:last-child { text-align: right; font-weight: 700; }
+    .auto-page .ap-totals tr.grand td {
+      border-top: 1.5px solid #000; border-bottom: 1.5px solid #000;
+      font-weight: 800; font-size: 11px; padding: 4px 6px;
+    }
+    .auto-page .ap-words {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px;
+      align-items: center; margin-top: 8px; font-size: 10.5px; flex: 0 0 auto;
+    }
+    .auto-page .ap-words-label { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; display: block; margin-bottom: 2px; color: #333; }
+    .auto-page .ap-qr-cell { text-align: right; }
+    .auto-page .ap-qr-cell svg { width: 95px; height: 95px; display: block; margin-left: auto; }
+    .auto-page .ap-qr-url { font-size: 7.5px; word-break: break-all; margin-top: 2px; color: #333; max-width: 130px; }
+    .auto-page .ap-notes {
+      font-size: 9.5px; line-height: 1.4; padding: 5px 8px;
+      border-left: 2px solid #000; margin: 6px 0 0; flex: 0 0 auto;
+    }
+    .auto-page .ap-notes.center { text-align: center; border-left: 0; font-style: italic; }
+    .auto-page .ap-footer {
+      text-align: center; font-size: 9px; padding-top: 5px;
+      border-top: 1px dashed #000; margin-top: auto; line-height: 1.4; flex: 0 0 auto;
+    }
+    .auto-page .ap-both-sheet { height: 275mm; display: flex; flex-direction: column; overflow: hidden; }
+    .auto-page .ap-both-slot { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .auto-page .ap-both-slot .auto-page { flex: 1 1 0; min-height: 0; }
+    .auto-page .ap-both-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-align: center; padding-bottom: 2px; border-bottom: 1px dotted #000; margin-bottom: 4px; flex: 0 0 auto; }
+    .auto-page .ap-cut-line { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; font-size: 7.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 3px 0; }
+    .auto-page .ap-cut-line::before, .auto-page .ap-cut-line::after { content: ''; flex: 1; border-top: 1px dashed #000; }
+
     @media print {
       @page { margin: 10mm; size: A4; }
       html, body { background: #fff !important; color: #000 !important; display: block !important; margin: 0 !important; padding: 0 !important; }
       body > *:not(.print-area) { display: none !important; }
-      .print-area { display: block !important; position: static !important; width: 100% !important; padding: 0 !important; margin: 0 !important; background: #fff !important; color: #000 !important; font-family: "Helvetica Neue", Arial, sans-serif !important; }
+      .print-area { display: block !important; position: static !important; width: 100% !important; padding: 0 !important; margin: 0 !important; background: #fff !important; color: #000 !important; }
       .print-area * { color: inherit !important; background: transparent !important; }
       .no-print { display: none !important; }
       .modal-overlay { display: none !important; }
       .toast-container { display: none !important; }
-      .print-invoice-wrap { page-break-after: avoid; }
-      .print-invoice-wrap table { page-break-inside: avoid; }
-      .print-invoice-wrap tr { page-break-inside: avoid; }
+      #printMeasure { display: none !important; }
+      .print-stack { display: block !important; }
+      .print-area .auto-page {
+        break-after: page; page-break-after: always;
+        break-inside: avoid; page-break-inside: avoid;
+      }
+      .print-area .auto-page:last-child { break-after: auto; page-break-after: auto; }
+      .print-area .auto-page * { background: #fff !important; color: #000 !important; }
+      .print-area .ap-table th, .print-area .ap-table td,
+      .print-area .ap-plain th, .print-area .ap-plain td { border: 1px solid #000 !important; }
+      .print-area .ap-table tr.fill td { border-top: 0 !important; }
     }
 
     @media (max-width: 900px) {
@@ -1439,6 +1530,7 @@
   </div>
 
   <div class="print-area" id="printArea"></div>
+  <div id="printMeasure" aria-hidden="true"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1650,7 +1742,7 @@
       setTimeout(() => {
         try { window.print(); }
         catch (e) { console.error('Print failed:', e); showToast('Print failed.', 'error'); }
-      }, 180);
+      }, 220);
     }
     function parseTxnDate(str) {
       if (!str) return null;
@@ -1663,6 +1755,104 @@
         if (!isNaN(d.getTime())) return d;
       }
       return null;
+    }
+
+    /* ===== PRINT ENGINE — Modern Corporate ===== */
+    function printQRSVG(text, size) {
+      try {
+        if (typeof qrcode === 'undefined') return '';
+        const q = qrcode(0, 'M');
+        q.addData(text); q.make();
+        const n = q.getModuleCount();
+        let d = '';
+        for (let r = 0; r < n; r++)
+          for (let c = 0; c < n; c++)
+            if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+        const s = size || 90;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="-2 -2 ${n+4} ${n+4}" shape-rendering="crispEdges"><path d="${d}" fill="#000"/></svg>`;
+      } catch (e) { return ''; }
+    }
+
+    const PRINT_BRAND = `<div class="ap-brand">Roza Gift Corner &amp; Electric</div><div class="ap-brand-meta">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon<br>Phone: +8801715986646</div>`;
+
+    function printPageHTML(cfg, from, n, last, no, total) {
+      const cols = cfg.cols;
+      let rows = cfg.rows.slice(from, from + n).map(r =>
+        `<tr${cfg.rowH ? ` style="height:${cfg.rowH}px"` : ''}>` +
+        cols.map((c, j) => `<td class="${c.a || ''}${c.b ? ' bold' : ''}">${r[j] == null ? '' : r[j]}</td>`).join('') +
+        '</tr>'
+      ).join('');
+      if (!cfg.rows.length) rows = `<tr><td colspan="${cols.length}" class="center">${cfg.emptyText || 'No records.'}</td></tr>`;
+      if (!cfg.noFill) rows += `<tr class="fill">${cols.map(() => '<td></td>').join('')}</tr>`;
+      const meta = cfg.meta.map(m => `<div class="ap-meta">${m[0]}: <strong>${escapeHtml(m[1])}</strong></div>`).join('') +
+                   (cfg.nopage ? '' : `<div class="ap-meta">Page: <strong>${no} of ${total}</strong></div>`);
+      const info = cfg.info ? `<div class="ap-info">${cfg.info.map(i => `<div><div class="ap-info-label">${i[0]}</div><div class="ap-info-value">${i[1]}</div></div>`).join('')}</div>` : '';
+      return `<div class="auto-page"><div class="ap-body">
+        <div class="ap-header">
+          <div>${PRINT_BRAND}</div>
+          <div><div class="ap-title">${cfg.title}</div>${meta}</div>
+        </div>
+        ${info}${cfg.pre || ''}
+        <div class="ap-section">${cfg.section}</div>
+        <div class="ap-table-wrap${cfg.noFill ? ' nofill' : ''}">
+          <table class="ap-table"><colgroup>${cols.map(c => `<col${c.w ? ` style="width:${c.w}%"` : ''}>`).join('')}</colgroup>
+            <thead><tr>${cols.map(c => `<th class="${c.a || ''}">${c.h}</th>`).join('')}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        ${last ? (cfg.last || '') : `<div class="ap-notes center">Continued on next page — totals appear on the final page.</div>`}
+        <div class="ap-footer"><strong>Thank you for your business.</strong><br>${cfg.footer || 'Computer-generated document. No signature required.'}</div>
+      </div></div>`;
+    }
+
+    function printFits(html) {
+      const m = document.getElementById('printMeasure');
+      if (!m) return true;
+      m.innerHTML = `<div class="print-stack">${html}</div>`;
+      const p = m.querySelector('.auto-page');
+      if (!p) return true;
+      return p.scrollHeight <= p.clientHeight + 2;
+    }
+
+    function printPaginate(cfg) {
+      const R = cfg.rows.length, specs = [];
+      let i = 0;
+      for (let guard = 0; guard < 500; guard++) {
+        const r = R - i;
+        if (r <= 0 || printFits(printPageHTML(cfg, i, r, true, 1, 99))) {
+          specs.push([i, Math.max(r, 0), true]); break;
+        }
+        let n = 1;
+        while (n < r && printFits(printPageHTML(cfg, i, n + 1, false, 1, 99))) n++;
+        specs.push([i, n, false]); i += n;
+      }
+      return specs;
+    }
+
+    function printBuild(cfg) {
+      const measure = document.getElementById('printMeasure');
+      if (!measure) return '';
+      const specs = printPaginate(cfg);
+      const out = [];
+      specs.forEach(([f, n, l], k) => {
+        measure.innerHTML = `<div class="print-stack">${printPageHTML(cfg, f, n, l, k + 1, specs.length)}</div>`;
+        const p = measure.querySelector('.auto-page');
+        const fill = p.querySelector('tr.fill');
+        if (fill) {
+          const wrap = p.querySelector('.ap-table-wrap');
+          const tbl = wrap.querySelector('table');
+          fill.style.height = Math.max(0, wrap.clientHeight - tbl.offsetHeight - 1) + 'px';
+        }
+        out.push(p.outerHTML);
+      });
+      measure.innerHTML = '';
+      return `<div class="print-stack">${out.join('')}</div>`;
+    }
+
+    function printReportQR(text, label) {
+      const url = text || getAppBaseUrl();
+      const qr = printQRSVG(url, 90);
+      return `<div class="ap-words" style="margin-top:8px"><div><span class="ap-words-label">${label || 'Scan to view online'}</span><em style="font-style:normal;font-size:9.5px;color:#57606a;">${escapeHtml(url)}</em></div><div class="ap-qr-cell">${qr}</div></div>`;
     }
 
     function numberToWords(num) {
@@ -2100,7 +2290,7 @@
           customerCount: customers.length,
           invoiceCount: invoices.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.10.3-invoice-fix'
+          appVersion: '1.10.4-print-engine'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         lastPushedInvoiceHash = JSON.stringify(invoices);
@@ -2283,7 +2473,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.3' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.4' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -2768,54 +2958,26 @@
     function printTransactionStatement() {
       const all = buildAllTransactions();
       const filtered = filterTransactions(all);
-      let totalReceived = 0, totalDueAdded = 0, totalAdjustments = 0;
-      filtered.forEach(t => {
-        const cls = txnTypeClass(t.type);
-        if (cls === 'received') totalReceived += Number(t.amount) || 0;
-        else if (cls === 'due-added') totalDueAdded += Number(t.amount) || 0;
-        else if (cls === 'adjustment') totalAdjustments += Number(t.amount) || 0;
-      });
-      const html = `
-        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',serif;color:#000;">
-          <h2 style="text-align:center;border-bottom:1px solid #000;padding-bottom:6px;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-          <p style="text-align:center;font-size:11px;">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon | +8801715986646</p>
-          <hr style="border-top:1px solid #000;">
-          <h3 style="text-align:center;">TRANSACTION STATEMENT</h3>
-          <p style="text-align:center;font-size:11px;">Generated: ${new Date().toLocaleString()}</p>
-          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;">
-            <thead><tr>
-              <th style="border:1px solid #000;padding:4px;">#</th>
-              <th style="border:1px solid #000;padding:4px;">Date &amp; Time</th>
-              <th style="border:1px solid #000;padding:4px;">Customer</th>
-              <th style="border:1px solid #000;padding:4px;">Type</th>
-              <th style="border:1px solid #000;padding:4px;">Amount</th>
-              <th style="border:1px solid #000;padding:4px;">Notes</th>
-            </tr></thead>
-            <tbody>
-              ${filtered.length === 0
-                ? `<tr><td colspan="6" style="text-align:center;border:1px solid #000;padding:8px;">No transactions match.</td></tr>`
-                : filtered.map((t, i) => `
-                  <tr>
-                    <td style="border:1px solid #000;padding:4px;">${i + 1}</td>
-                    <td style="border:1px solid #000;padding:4px;">${t.date || '—'}</td>
-                    <td style="border:1px solid #000;padding:4px;">${t.customerName}</td>
-                    <td style="border:1px solid #000;padding:4px;">${t.type}</td>
-                    <td style="border:1px solid #000;padding:4px;text-align:right;">${formatMoneyOrZero(t.amount)}</td>
-                    <td style="border:1px solid #000;padding:4px;">${t.note || ''}</td>
-                  </tr>
-                `).join('')}
-            </tbody>
-          </table>
-          <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;">
-            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Total Transactions</td><td style="border:1px solid #000;padding:6px;text-align:right;">${filtered.length}</td></tr>
-            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Payments Received</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalReceived)}</td></tr>
-            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Due Added</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalDueAdded)}</td></tr>
-            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Adjustments</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalAdjustments)}</td></tr>
-          </table>
-          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
-        </div>
-      `;
-      triggerPrint(html);
+      const sum = k => filtered.filter(t => (t.type || '').toLowerCase().includes(k)).reduce((s, t) => s + (+t.amount || 0), 0);
+      const refUrl = getAppBaseUrl();
+
+      const cfg = {
+        title: 'Transaction Statement',
+        meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', filtered.length]],
+        section: 'Transactions',
+        cols: [
+          { h: '#', w: 5, a: 'center' },
+          { h: 'Date &amp; Time', w: 21 },
+          { h: 'Customer', w: 22 },
+          { h: 'Type', w: 17 },
+          { h: 'Amount', w: 12, a: 'right' },
+          { h: 'Notes' }
+        ],
+        rows: filtered.map((t, i) => [i + 1, escapeHtml(t.date || '—'), `<strong>${escapeHtml(t.customerName)}</strong>`, escapeHtml(t.type), formatMoneyOrZero(t.amount), escapeHtml(t.note || '')]),
+        emptyText: 'No transactions match.',
+        last: `<table class="ap-totals"><tr><td>Total Transactions</td><td>${filtered.length}</td></tr><tr><td>Payments Received</td><td>${formatMoneyOrZero(sum('receive'))}</td></tr><tr><td>Due Added</td><td>${formatMoneyOrZero(sum('due added'))}</td></tr><tr><td>Adjustments</td><td>${formatMoneyOrZero(sum('adjust'))}</td></tr></table>${printReportQR(refUrl)}`
+      };
+      triggerPrint(printBuild(cfg));
     }
 
     function applyFilters() {
@@ -3241,155 +3403,141 @@
       if (!c) return;
       const currentDue = getCurrentDue(c);
       const status = getStatus(c);
-      const receiptHTML = `
-        <div style="border:2px double #000;padding:20px;max-width:700px;margin:0 auto;font-family:'Times New Roman',Georgia,serif;color:#000;">
-          <div style="text-align:right;font-size:11px;">FORM NO. RGCE/01</div>
-          <h2 style="text-align:center;border-bottom:1px solid #000;padding-bottom:6px;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-          <p style="text-align:center;font-size:12px;">Gifts • Electrical • Cosmetics - Under One Roof</p>
-          <p style="text-align:center;font-size:11px;">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon | +8801715986646</p>
-          <hr style="border-top:1px solid #000;">
-          <h3 style="text-align:center;">${copyType === 'customer' ? 'CUSTOMER COPY' : 'STORE COPY – ACCOUNTING RECORD'}</h3>
-          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Customer Name</td><td style="border:1px solid #000;padding:4px;">${c.name}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Phone</td><td style="border:1px solid #000;padding:4px;">${c.phone || '—'}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Address</td><td style="border:1px solid #000;padding:4px;">${c.address || '—'}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Date</td><td style="border:1px solid #000;padding:4px;">${new Date().toLocaleDateString()}</td></tr>
-          </table>
-          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Total Due</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(c.due || 0)}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Total Paid</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(c.paid || 0)}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Current Due</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(currentDue)}</td></tr>
-            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Status</td><td style="border:1px solid #000;padding:4px;">${status}</td></tr>
-          </table>
-          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated document. No signature required.</p>
-        </div>
-      `;
-      const finalHTML = copyType === 'both'
-        ? receiptHTML + '<div style="text-align:center;margin:20px 0;font-size:14px;">✂ CUT HERE ✂</div>' + receiptHTML
-        : receiptHTML;
-      triggerPrint(finalHTML);
+      const refUrl = getAppBaseUrl() + '?stmt=' + encodeURIComponent(c.id);
+
+      const buildCfg = (half) => ({
+        title: half ? 'Statement' : 'Account Statement',
+        cls: half ? 'half' : '',
+        nopage: half ? 1 : 0,
+        noFill: half ? 1 : 0,
+        footer: half ? '' : '',
+        meta: [['Ref', c.id], ['Date', new Date().toLocaleDateString('en-GB')]],
+        info: [
+          ['Customer', `<strong>${escapeHtml(c.name)}</strong>${c.phone ? '<br>' + escapeHtml(c.phone) : ''}${c.address ? '<br>' + escapeHtml(c.address) : ''}`],
+          ['Status', `<strong>${escapeHtml(status)}</strong>`]
+        ],
+        section: 'Account Summary',
+        cols: [
+          { h: 'Description', w: 65 },
+          { h: 'Amount', a: 'right' }
+        ],
+        rows: [
+          ['Total Due', formatMoneyOrZero(c.due || 0)],
+          ['Total Paid', formatMoneyOrZero(c.paid || 0)],
+          ['<strong>Current Outstanding</strong>', `<strong>${formatMoneyOrZero(currentDue)}</strong>`]
+        ],
+        last: half ? '' : printReportQR(refUrl, 'Scan to view online')
+      });
+
+      if (copyType === 'both') {
+        const single = (label) => {
+          const cfg = buildCfg(true);
+          const p = printPageHTML(cfg, 0, cfg.rows.length, true, 1, 1);
+          return `<div class="ap-both-slot"><div class="ap-both-label">${label}</div>${p}</div>`;
+        };
+        const html = `<div class="print-stack"><div class="auto-page"><div class="ap-both-sheet">${single('Customer Copy')}<div class="ap-cut-line"><span>✂ Cut Here</span></div>${single('Store Copy')}</div></div></div>`;
+        triggerPrint(html);
+        return;
+      }
+      triggerPrint(printBuild(buildCfg(false)));
     }
 
     function printHistory(id) {
       const c = customers.find(x => x.id === id);
       if (!c) return;
-      const html = `
-        <div style="border:2px double #000;padding:20px;max-width:700px;margin:0 auto;font-family:'Times New Roman',Georgia,serif;color:#000;">
-          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-          <h3 style="text-align:center;">PAYMENT HISTORY – ${c.name}</h3>
-          <p><strong>ID:</strong> ${c.id} | <strong>Date Added:</strong> ${c.dateAdded}</p>
-          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
-            <thead><tr>
-              <th style="border:1px solid #000;padding:4px;">SL</th>
-              <th style="border:1px solid #000;padding:4px;">Date &amp; Time</th>
-              <th style="border:1px solid #000;padding:4px;">Type</th>
-              <th style="border:1px solid #000;padding:4px;">Amount</th>
-              <th style="border:1px solid #000;padding:4px;">Notes</th>
-            </tr></thead>
-            <tbody>
-              ${(c.transactionHistory || []).map((t, i) => `
-                <tr>
-                  <td style="border:1px solid #000;padding:4px;">${i+1}</td>
-                  <td style="border:1px solid #000;padding:4px;">${t.date}</td>
-                  <td style="border:1px solid #000;padding:4px;">${t.type}</td>
-                  <td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(t.amount)}</td>
-                  <td style="border:1px solid #000;padding:4px;">${t.note || ''}</td>
-                </tr>
-              `).join('') || '<tr><td colspan="5" style="text-align:center;border:1px solid #000;padding:8px;">No transaction history</td></tr>'}
-            </tbody>
-          </table>
-          <p style="text-align:center;font-size:11px;">Computer-generated. No signature required.</p>
-        </div>
-      `;
-      triggerPrint(html);
+      const tx = c.transactionHistory || [];
+      const refUrl = getAppBaseUrl() + '?stmt=' + encodeURIComponent(c.id);
+
+      const cfg = {
+        title: 'Payment History',
+        meta: [['Ref', c.id], ['Date', new Date().toLocaleDateString('en-GB')], ['Records', tx.length]],
+        info: [
+          ['Customer', `<strong>${escapeHtml(c.name)}</strong>${c.phone ? '<br>' + escapeHtml(c.phone) : ''}${c.address ? '<br>' + escapeHtml(c.address) : ''}`],
+          ['Member Since', escapeHtml(c.dateAdded || '—')]
+        ],
+        section: 'Transaction Ledger',
+        cols: [
+          { h: '#', w: 6, a: 'center' },
+          { h: 'Date &amp; Time', w: 25 },
+          { h: 'Type', w: 20 },
+          { h: 'Amount', w: 15, a: 'right' },
+          { h: 'Notes' }
+        ],
+        rows: tx.map((t, i) => [i + 1, escapeHtml(t.date || ''), escapeHtml(t.type || ''), formatMoneyOrZero(t.amount), escapeHtml(t.note || '')]),
+        emptyText: 'No transaction history recorded.',
+        last: printReportQR(refUrl, 'Scan to view online')
+      };
+      triggerPrint(printBuild(cfg));
     }
 
     function printFilteredReport() {
       applyFilters();
-      const html = `
-        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',Georgia,serif;color:#000;">
-          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-          <h3 style="text-align:center;">FILTERED CUSTOMER REPORT</h3>
-          <p>Active filters: ${document.getElementById('globalSearch').value ? 'Search: ' + document.getElementById('globalSearch').value + ' | ' : ''}${document.getElementById('filterAddress').value || 'All addresses'} | ${document.getElementById('filterStatus').value || 'All statuses'} | ${document.getElementById('filterSource').value || 'All sources'}</p>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr>
-              <th style="border:1px solid #000;padding:3px;">SL</th>
-              <th style="border:1px solid #000;padding:3px;">Name</th>
-              <th style="border:1px solid #000;padding:3px;">Address</th>
-              <th style="border:1px solid #000;padding:3px;">Source</th>
-              <th style="border:1px solid #000;padding:3px;">Total Due</th>
-              <th style="border:1px solid #000;padding:3px;">Total Paid</th>
-              <th style="border:1px solid #000;padding:3px;">Current Due</th>
-              <th style="border:1px solid #000;padding:3px;">Status</th>
-            </tr></thead>
-            <tbody>
-              ${filteredCustomers.map((c, i) => `
-                <tr>
-                  <td style="border:1px solid #000;padding:3px;">${i+1}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.name}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.address || ''}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.source || ''}</td>
-                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.due || 0)}</td>
-                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.paid || 0)}</td>
-                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(getCurrentDue(c))}</td>
-                  <td style="border:1px solid #000;padding:3px;">${getStatus(c)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
-        </div>
-      `;
-      triggerPrint(html);
+      const search = document.getElementById('globalSearch').value;
+      const addr = document.getElementById('filterAddress').value;
+      const stat = document.getElementById('filterStatus').value;
+      const src = document.getElementById('filterSource').value;
+      const filterText = [
+        search ? `Search: "${search}"` : null,
+        addr ? `Address: ${addr}` : null,
+        stat ? `Status: ${stat}` : null,
+        src ? `Source: ${src}` : null
+      ].filter(Boolean).join('  ·  ') || 'All records';
+      const tDue = filteredCustomers.reduce((s, c) => s + (c.due || 0), 0);
+      const tPaid = filteredCustomers.reduce((s, c) => s + (c.paid || 0), 0);
+      const tOut = filteredCustomers.reduce((s, c) => s + getCurrentDue(c), 0);
+      const refUrl = getAppBaseUrl();
+
+      const cfg = {
+        title: 'Customer Report',
+        meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', filteredCustomers.length]],
+        pre: `<div class="ap-notes"><strong>Filters applied:</strong> ${escapeHtml(filterText)}</div>`,
+        section: 'Customers',
+        cols: [
+          { h: '#', w: 5, a: 'center' },
+          { h: 'Name', w: 21 },
+          { h: 'Address', w: 18 },
+          { h: 'Source', w: 8, a: 'center' },
+          { h: 'Due', w: 12, a: 'right' },
+          { h: 'Paid', w: 12, a: 'right' },
+          { h: 'Outstanding', w: 13, a: 'right' },
+          { h: 'Status', w: 11, a: 'center' }
+        ],
+        rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), formatMoneyOrZero(c.paid || 0), formatMoneyOrZero(getCurrentDue(c)), escapeHtml(getStatus(c))]),
+        last: `<table class="ap-totals"><tr><td>Total Due</td><td>${formatMoneyOrZero(tDue)}</td></tr><tr><td>Total Paid</td><td>${formatMoneyOrZero(tPaid)}</td></tr><tr class="grand"><td>Total Outstanding</td><td>${formatMoneyOrZero(tOut)}</td></tr></table>${printReportQR(refUrl)}`
+      };
+      triggerPrint(printBuild(cfg));
     }
 
     function printManualReport() {
       applyFilters();
-      const html = `
-        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',Georgia,serif;color:#000;">
-          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-          <h3 style="text-align:center;">MANUAL COLLECTION SHEET</h3>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr>
-              <th style="border:1px solid #000;padding:3px;">SL</th>
-              <th style="border:1px solid #000;padding:3px;">Name</th>
-              <th style="border:1px solid #000;padding:3px;">Address</th>
-              <th style="border:1px solid #000;padding:3px;">Source</th>
-              <th style="border:1px solid #000;padding:3px;">Total Due</th>
-              <th style="border:1px solid #000;padding:3px;">Paid Amount</th>
-              <th style="border:1px solid #000;padding:3px;">Current Due</th>
-            </tr></thead>
-            <tbody>
-              ${filteredCustomers.map((c, i) => `
-                <tr>
-                  <td style="border:1px solid #000;padding:3px;">${i+1}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.name}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.address || ''}</td>
-                  <td style="border:1px solid #000;padding:3px;">${c.source || ''}</td>
-                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.due || 0)}</td>
-                  <td style="border:1px solid #000;padding:3px;height:24px;"></td>
-                  <td style="border:1px solid #000;padding:3px;height:24px;"></td>
-                </tr>
-              `).join('')}
-              <tr style="font-weight:700;">
-                <td colspan="4" style="border:1px solid #000;padding:3px;text-align:right;">TOTALS</td>
-                <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(filteredCustomers.reduce((s, c) => s + (c.due || 0), 0))}</td>
-                <td style="border:1px solid #000;padding:3px;"></td>
-                <td style="border:1px solid #000;padding:3px;"></td>
-              </tr>
-            </tbody>
-          </table>
-          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
-        </div>
-      `;
-      triggerPrint(html);
+      const tDue = filteredCustomers.reduce((s, c) => s + (c.due || 0), 0);
+      const refUrl = getAppBaseUrl();
+
+      const cfg = {
+        title: 'Manual Collection Sheet',
+        meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', filteredCustomers.length]],
+        pre: '<div class="ap-notes">Fill the “Paid” and “Remaining” columns by hand.</div>',
+        section: 'Collection List',
+        rowH: 28,
+        cols: [
+          { h: '#', w: 5, a: 'center' },
+          { h: 'Name', w: 22 },
+          { h: 'Address', w: 17 },
+          { h: 'Source', w: 8, a: 'center' },
+          { h: 'Opening Due', w: 14, a: 'right' },
+          { h: 'Paid (fill)', w: 17, a: 'right' },
+          { h: 'Remaining (fill)', w: 17, a: 'right' }
+        ],
+        rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), '', '']),
+        last: `<table class="ap-totals"><tr class="grand"><td>Total Opening Due</td><td>${formatMoneyOrZero(tDue)}</td></tr></table>${printReportQR(refUrl)}`
+      };
+      triggerPrint(printBuild(cfg));
     }
 
     /* ============================================================
        INVOICE SYSTEM
        ============================================================ */
 
-    // Random unique invoice number (e.g. INV-6K4A9B2F)
     function generateInvoiceNumber() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let id = '';
@@ -3397,7 +3545,6 @@
         id += chars[Math.floor(Math.random() * chars.length)];
       }
       let num = 'INV-' + id;
-      // Safety: avoid collision with existing invoice numbers
       let guard = 0;
       while (invoices.some(inv => inv.invoiceNumber === num) && guard < 20) {
         id = '';
@@ -3455,11 +3602,9 @@
       }
     }
 
-    /* ---------- Product index for autocomplete / corner highlight ---------- */
-    let productIndex = [];           // [{ name, lastPrice, lastDiscount, count }]
+    let productIndex = [];
     function rebuildProductIndex() {
       const map = new Map();
-      // Build from invoices (line items)
       invoices.forEach(inv => {
         (inv.items || []).forEach(it => {
           const nm = (it.name || '').trim();
@@ -3515,7 +3660,6 @@
       });
     }
 
-    /* ---------- Render invoice items (friendly) ---------- */
     function renderInvoiceItems() {
       const tbody = document.getElementById('invoiceItemsBody');
       if (!tbody) return;
@@ -3553,7 +3697,6 @@
         tbody.appendChild(tr);
       });
 
-      // ----- input wiring -----
       tbody.querySelectorAll('input[data-field]').forEach(inp => {
         inp.addEventListener('input', (e) => {
           const idx = parseInt(e.target.dataset.idx, 10);
@@ -3615,7 +3758,6 @@
         });
       });
 
-      // remove buttons
       tbody.querySelectorAll('[data-remove]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const idx = parseInt(btn.dataset.remove, 10);
@@ -3627,7 +3769,6 @@
       });
     }
 
-    /* ---------- Corner highlight suggestion dropdown ---------- */
     function showItemSuggestions(idx, query) {
       const dd = document.querySelector(`.item-suggest[data-suggest-for="${idx}"]`);
       if (!dd) return;
@@ -3675,14 +3816,12 @@
       });
     }
 
-    // Hide suggestion dropdowns when clicking elsewhere
     document.addEventListener('mousedown', (e) => {
       document.querySelectorAll('.item-suggest.open').forEach(dd => {
         if (!dd.parentElement.contains(e.target)) dd.classList.remove('open');
       });
     });
 
-    /* ---------- Add row ---------- */
     function addInvoiceItemRow(preset) {
       const item = preset
         ? { name: preset.name || '', qty: preset.qty || 1, price: preset.price || 0, discount: preset.discount || 0 }
@@ -3884,10 +4023,6 @@
       showToast('✅ Invoice ' + invoiceObj.invoiceNumber + ' saved', 'success');
     }
 
-    /**
-     * Save invoice. If shouldPrint, show a preview modal first,
-     * then print upon confirmation.
-     */
     function saveInvoiceAndPrint(shouldPrint) {
       if (!currentUser) { showToast('Please login first.', 'warning'); return; }
       const invoiceObj = buildInvoiceObjectFromForm();
@@ -3899,7 +4034,6 @@
         return;
       }
 
-      // ----- Preview before print -----
       const publicUrl = buildInvoicePublicUrl(invoiceObj);
       const qrSvg = generateQRSVG(publicUrl, 120);
       const previewHTML = `
@@ -4340,143 +4474,38 @@
     }
 
     function buildInvoicePrintHTML(inv, qrSvg, publicUrl) {
-      const itemsRows = inv.items.map((it, i) => `
-        <tr style="border-bottom:1px solid #e5e7eb;">
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;text-align:center;">${i + 1}</td>
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;">${escapeHtml(it.name)}</td>
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;text-align:center;">${it.qty}</td>
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;text-align:right;">${formatMoneyOrZero(it.price)}</td>
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;text-align:right;">${formatMoneyOrZero(it.discount)}</td>
-          <td style="padding:5px 6px;font-size:10.5px;color:#1f2328;text-align:right;font-weight:700;">${formatMoneyOrZero(it.total)}</td>
-        </tr>
-      `).join('');
-
-      const amountWords = numberToWords(inv.total);
-      const statusColor = inv.status === 'Paid' ? '#1a7f37' : (inv.status === 'Partial' ? '#bf8700' : '#cf222e');
-      const dueRowStyle = inv.due > 0 ? 'background:#fff5f5;' : '';
-
-      return `
-        <div class="print-invoice-wrap" style="font-family:'Helvetica Neue',Arial,sans-serif;color:#1f2328;max-width:200mm;margin:0 auto;padding:0;font-size:10.5px;line-height:1.35;">
-
-          <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-            <tr>
-              <td style="vertical-align:top;padding-bottom:6px;border-bottom:2px solid #1f4e79;">
-                <div style="font-size:20px;font-weight:800;color:#1f4e79;letter-spacing:-0.3px;line-height:1;">RGCE</div>
-                <div style="font-size:10.5px;font-weight:700;color:#1f2328;margin-top:2px;">Roza Gift Corner &amp; Electric</div>
-                <div style="font-size:9px;color:#57606a;margin-top:3px;line-height:1.4;">
-                  Moshjid Market, Naohata Mor, Mohadevpur, Naogaon &nbsp;|&nbsp; Phone: +8801715986646
-                </div>
-              </td>
-              <td style="vertical-align:top;text-align:right;padding-bottom:6px;border-bottom:2px solid #1f4e79;">
-                <div style="font-size:20px;font-weight:800;color:#1f4e79;letter-spacing:1.5px;line-height:1;">INVOICE</div>
-                <div style="margin-top:5px;font-size:9px;color:#57606a;text-transform:uppercase;letter-spacing:0.5px;">Invoice #</div>
-                <div style="font-size:12px;font-weight:800;color:#1f2328;">${escapeHtml(inv.invoiceNumber)}</div>
-                <div style="margin-top:3px;font-size:9px;color:#57606a;text-transform:uppercase;letter-spacing:0.5px;">Date</div>
-                <div style="font-size:11px;font-weight:700;color:#1f2328;">${escapeHtml(inv.dateDisplay)}</div>
-                <div style="margin-top:5px;display:inline-block;padding:2px 10px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:0.5px;color:#fff;background:${statusColor};text-transform:uppercase;">${escapeHtml(inv.status)}</div>
-              </td>
-            </tr>
-          </table>
-
-          <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
-            <tr>
-              <td style="width:55%;vertical-align:top;padding-right:12px;">
-                <div style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#57606a;margin-bottom:3px;">Bill To</div>
-                <div style="font-size:12px;font-weight:800;color:#1f2328;line-height:1.2;">${escapeHtml(inv.customer.name)}</div>
-                <div style="color:#57606a;margin-top:3px;line-height:1.5;font-size:10px;">
-                  ${inv.customer.phone ? escapeHtml(inv.customer.phone) + (inv.customer.address ? ' &nbsp;|&nbsp; ' : '') : ''}${inv.customer.address ? escapeHtml(inv.customer.address) : ''}
-                </div>
-              </td>
-              <td style="width:45%;vertical-align:top;padding-left:12px;">
-                <div style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#57606a;margin-bottom:3px;">Payment Details</div>
-                <table style="width:100%;font-size:10px;color:#1f2328;line-height:1.6;">
-                  <tr><td style="color:#57606a;">Method:</td><td style="text-align:right;font-weight:700;">${escapeHtml(inv.paymentMethod)}</td></tr>
-                  <tr><td style="color:#57606a;">Status:</td><td style="text-align:right;font-weight:700;color:${statusColor};">${escapeHtml(inv.status).toUpperCase()}</td></tr>
-                  <tr><td style="color:#57606a;">Currency:</td><td style="text-align:right;font-weight:700;">BDT (৳)</td></tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:10.5px;">
-            <thead>
-              <tr style="background:#1f4e79;color:#ffffff;">
-                <th style="padding:6px 6px;text-align:center;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:28px;">#</th>
-                <th style="padding:6px 6px;text-align:left;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;">Description</th>
-                <th style="padding:6px 6px;text-align:center;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:44px;">Qty</th>
-                <th style="padding:6px 6px;text-align:right;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:80px;">Unit Price</th>
-                <th style="padding:6px 6px;text-align:right;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:70px;">Discount</th>
-                <th style="padding:6px 6px;text-align:right;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:90px;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>${itemsRows}</tbody>
-          </table>
-
-          <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
-            <tr>
-              <td style="width:55%;vertical-align:top;padding-right:12px;">
-                ${inv.notes ? `
-                  <div style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#57606a;margin-bottom:3px;">Notes</div>
-                  <div style="font-size:9.5px;color:#1f2328;line-height:1.5;padding:6px 8px;background:#f6f8fa;border-left:2px solid #1f4e79;">${escapeHtml(inv.notes)}</div>
-                ` : ''}
-                <div style="margin-top:6px;">
-                  <div style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#57606a;margin-bottom:2px;">Amount in Words</div>
-                  <div style="font-size:9.5px;font-style:italic;color:#1f2328;line-height:1.4;">${amountWords}</div>
-                </div>
-              </td>
-              <td style="width:45%;vertical-align:top;">
-                <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
-                  <tr>
-                    <td style="padding:4px 8px;color:#57606a;border-bottom:1px dashed #d0d7de;">Subtotal</td>
-                    <td style="padding:4px 8px;text-align:right;color:#1f2328;border-bottom:1px dashed #d0d7de;">${formatMoneyOrZero(inv.subtotal)}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 8px;color:#57606a;border-bottom:1px dashed #d0d7de;">Discount</td>
-                    <td style="padding:4px 8px;text-align:right;color:#1f2328;border-bottom:1px dashed #d0d7de;">-${formatMoneyOrZero(inv.discountAmount)}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 8px;color:#57606a;border-bottom:1px dashed #d0d7de;">Tax (${inv.taxPercent}%)</td>
-                    <td style="padding:4px 8px;text-align:right;color:#1f2328;border-bottom:1px dashed #d0d7de;">${formatMoneyOrZero(inv.taxAmount)}</td>
-                  </tr>
-                  <tr style="border-top:1.5px solid #1f4e79;border-bottom:1.5px solid #1f4e79;">
-                    <td style="padding:7px 8px;font-size:12px;font-weight:800;color:#1f4e79;text-transform:uppercase;letter-spacing:0.5px;">Total</td>
-                    <td style="padding:7px 8px;text-align:right;font-size:14px;font-weight:800;color:#1f4e79;">${formatMoneyOrZero(inv.total)}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 8px;color:#57606a;">Paid</td>
-                    <td style="padding:4px 8px;text-align:right;color:#1a7f37;font-weight:700;">${formatMoneyOrZero(inv.paid)}</td>
-                  </tr>
-                  <tr style="${dueRowStyle}">
-                    <td style="padding:6px 8px;font-weight:800;color:#cf222e;text-transform:uppercase;letter-spacing:0.4px;">Due</td>
-                    <td style="padding:6px 8px;text-align:right;font-weight:800;color:#cf222e;font-size:12px;">${formatMoneyOrZero(inv.due)}</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <table style="width:100%;border-collapse:collapse;margin-top:8px;border-top:1.5px solid #e5e7eb;">
-            <tr>
-              <td style="vertical-align:middle;padding:10px 12px 0 0;">
-                <div style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#57606a;margin-bottom:3px;">Scan to Verify</div>
-                <div style="font-size:9.5px;color:#57606a;line-height:1.4;">
-                  Scan this QR code to view the complete invoice details online.<br>
-                  This is a computer-generated document — no signature required.
-                </div>
-              </td>
-              <td style="text-align:right;width:130px;vertical-align:middle;padding-top:10px;">
-                ${qrSvg || `<div style="width:130px;height:130px;font-size:9px;color:#57606a;text-align:center;padding:8px;">QR Unavailable</div>`}
-                <div style="font-size:7px;color:#8c959f;margin-top:3px;text-align:right;word-break:break-all;max-width:150px;line-height:1.3;">${publicUrl ? escapeHtml(publicUrl) : ''}</div>
-              </td>
-            </tr>
-          </table>
-
-          <div style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px dashed #d0d7de;font-size:8.5px;color:#8c959f;line-height:1.4;">
-            <div style="font-size:10px;font-weight:800;color:#1f4e79;margin-bottom:2px;">Thank you for your business!</div>
-            Roza Gift Corner &amp; Electric &nbsp;|&nbsp; +8801715986646 &nbsp;|&nbsp; Moshjid Market, Naohata Mor, Mohadevpur, Naogaon
-          </div>
-        </div>
-      `;
+      const items = inv.items || [];
+      const cfg = {
+        title: 'Invoice',
+        meta: [
+          ['Invoice #', inv.invoiceNumber],
+          ['Date', inv.dateDisplay],
+          ['Status', inv.status]
+        ],
+        info: [
+          ['Bill To', `<strong>${escapeHtml(inv.customer.name)}</strong>${inv.customer.phone ? '<br>' + escapeHtml(inv.customer.phone) : ''}${inv.customer.address ? '<br>' + escapeHtml(inv.customer.address) : ''}`],
+          ['Payment Method', escapeHtml(inv.paymentMethod)]
+        ],
+        section: 'Items',
+        cols: [
+          { h: '#', w: 6, a: 'center' },
+          { h: 'Description' },
+          { h: 'Qty', w: 8, a: 'center' },
+          { h: 'Unit Price', w: 14, a: 'right' },
+          { h: 'Discount', w: 13, a: 'right' },
+          { h: 'Amount', w: 15, a: 'right', b: 1 }
+        ],
+        rows: items.map((it, i) => [i + 1, escapeHtml(it.name), it.qty, formatMoneyOrZero(it.price), formatMoneyOrZero(it.discount), formatMoneyOrZero(it.total)]),
+        emptyText: 'No items.',
+        last: `<table class="ap-totals"><tr><td>Subtotal</td><td>${formatMoneyOrZero(inv.subtotal)}</td></tr><tr><td>Discount</td><td>−${formatMoneyOrZero(inv.discountAmount)}</td></tr>
+          ${inv.taxPercent ? `<tr><td>Tax (${inv.taxPercent}%)</td><td>${formatMoneyOrZero(inv.taxAmount)}</td></tr>` : ''}
+          <tr class="grand"><td>Grand Total</td><td>${formatMoneyOrZero(inv.total)}</td></tr>
+          <tr><td>Paid</td><td>${formatMoneyOrZero(inv.paid)}</td></tr>
+          <tr><td><strong>Due</strong></td><td>${formatMoneyOrZero(inv.due)}</td></tr></table>
+          <div class="ap-words"><div><span class="ap-words-label">Amount in Words</span><em>${numberToWords(inv.total)}</em></div><div class="ap-qr-cell">${qrSvg || ''}<div class="ap-qr-url">${escapeHtml(publicUrl || '')}</div></div></div>
+          ${inv.notes ? `<div class="ap-notes"><strong>Notes:</strong> ${escapeHtml(inv.notes)}</div>` : ''}`
+      };
+      return printBuild(cfg);
     }
 
     function printInvoice(id) {
@@ -4541,7 +4570,6 @@
 
       const statusColor = inv.status === 'Paid' ? '#1a7f37' : (inv.status === 'Partial' ? '#bf8700' : '#cf222e');
 
-      // Verified stamp image loaded from same folder as this app
       const STAMP_IMAGE_FILE = "seal-verified.jpg";
       const stampImgHTML = `
         <img src="${STAMP_IMAGE_FILE}" alt="Verified Stamp"
@@ -4552,7 +4580,6 @@
       container.innerHTML = `
         <div style="max-width:820px;margin:0 auto;">
 
-          <!-- Header: RGCE badge -->
           <div style="text-align:center;margin-bottom:20px;">
             <div style="display:inline-flex;align-items:center;gap:12px;padding:10px 20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;">
               <div style="width:38px;height:38px;background:#1f4e79;color:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-shield-halved"></i></div>
@@ -4563,7 +4590,6 @@
             </div>
           </div>
 
-          <!-- Shop name block (visible on the page) -->
           <div style="text-align:center;margin-bottom:16px;">
             <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.3px;">${escapeHtml(inv.shopName || 'Roza Gift Corner & Electric')}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(inv.shopAddress || '')}</div>
@@ -4571,7 +4597,6 @@
           </div>
 
           <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md);">
-            <!-- Invoice header -->
             <div style="background:#1f4e79;color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
               <div>
                 <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:1px;">Invoice</div>
@@ -4584,7 +4609,6 @@
               </div>
             </div>
 
-            <!-- Bill To + Issued By -->
             <div style="padding:20px 24px;border-bottom:1px solid var(--border);">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div>
@@ -4600,7 +4624,6 @@
               </div>
             </div>
 
-            <!-- Items -->
             <div style="padding:20px 24px;border-bottom:1px solid var(--border);overflow-x:auto;">
               <table style="width:100%;border-collapse:collapse;font-size:12px;">
                 <thead>
@@ -4617,11 +4640,9 @@
               </table>
             </div>
 
-            <!-- Totals + stamp image (stamp opposite the totals on the free left space) -->
             <div style="padding:20px 24px;">
               <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
 
-                <!-- STAMP IMAGE + name under it -->
                 <div style="flex:0 0 160px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
                   <div class="verified-stamp-box">
                     ${stampImgHTML}
@@ -4631,7 +4652,6 @@
                   </div>
                 </div>
 
-                <!-- TOTALS (right side) -->
                 <div style="flex:1;min-width:220px;max-width:340px;margin-left:auto;font-size:13px;">
                   <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);color:var(--muted);"><span>Subtotal</span><span>${formatMoneyOrZero(inv.subtotal)}</span></div>
                   <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);color:var(--muted);"><span>Discount</span><span>-${formatMoneyOrZero(inv.discountAmount)}</span></div>
@@ -4695,6 +4715,7 @@
       const paidCustomers = customers.filter(c => getStatus(c) === 'Paid').length;
       const partialPaid = customers.filter(c => getStatus(c) === 'Partial Paid').length;
       const avgDue = totalCustomers > 0 ? netOutstanding / totalCustomers : 0;
+
       const body = `
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
           <div class="preview-item"><div class="preview-label">Total Customers</div><div class="preview-value">${totalCustomers}</div></div>
@@ -4723,32 +4744,30 @@
       openModal('Summary Report', body, footer, true);
       document.getElementById('closeSummaryBtn').addEventListener('click', closeModal);
       document.getElementById('printSummaryBtn').addEventListener('click', () => {
-        const html = `
-          <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',serif;color:#000;">
-            <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
-            <h3 style="text-align:center;">SUMMARY REPORT</h3>
-            <table style="width:100%;border-collapse:collapse;font-size:13px;">
-              <thead><tr>
-                <th style="border:1px solid #000;padding:4px;">Description</th>
-                <th style="border:1px solid #000;padding:4px;">Count</th>
-                <th style="border:1px solid #000;padding:4px;">Amount</th>
-                <th style="border:1px solid #000;padding:4px;">Percentage</th>
-              </tr></thead>
-              <tbody>
-                <tr><td style="border:1px solid #000;padding:4px;">Total Customers</td><td style="border:1px solid #000;padding:4px;">${totalCustomers}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">100%</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Full Due</td><td style="border:1px solid #000;padding:4px;">${withDue}</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalDue)}</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(withDue/totalCustomers*100) : 0}%</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Partial Paid</td><td style="border:1px solid #000;padding:4px;">${partialPaid}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(partialPaid/totalCustomers*100) : 0}%</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Fully Paid</td><td style="border:1px solid #000;padding:4px;">${paidCustomers}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(paidCustomers/totalCustomers*100) : 0}%</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Total Starting Due</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalDue)}</td><td style="border:1px solid #000;padding:4px;">—</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Total Paid</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalPaid)}</td><td style="border:1px solid #000;padding:4px;">${totalDue ? Math.round(totalPaid/totalDue*100) : 0}% of due</td></tr>
-                <tr><td style="border:1px solid #000;padding:4px;">Net Outstanding</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(netOutstanding)}</td><td style="border:1px solid #000;padding:4px;">${totalDue ? Math.round(netOutstanding/totalDue*100) : 0}%</td></tr>
-              </tbody>
-            </table>
-            <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
-          </div>
-        `;
+        const cfg = {
+          title: 'Summary Report',
+          meta: [['Date', new Date().toLocaleDateString('en-GB')]],
+          section: 'Overview',
+          noFill: 1,
+          cols: [
+            { h: 'Metric', w: 70 },
+            { h: 'Value', a: 'right' }
+          ],
+          rows: [
+            ['Total Customers', totalCustomers],
+            ['Total Starting Due', formatMoneyOrZero(totalDue)],
+            ['Total Paid', formatMoneyOrZero(totalPaid)],
+            ['Net Outstanding', formatMoneyOrZero(netOutstanding)],
+            ['Average Due / Customer', formatMoneyOrZero(avgDue)]
+          ],
+          last: `<div class="ap-section" style="margin-top:8px">Breakdown</div><table class="ap-plain" style="margin-top:0"><thead><tr><th style="width:70%">Category</th><th class="right">Count</th><th class="right">%</th></tr></thead><tbody>
+            <tr><td>With Due</td><td class="right">${withDue}</td><td class="right">${totalCustomers ? Math.round(withDue/totalCustomers*100) : 0}%</td></tr>
+            <tr><td>Partial Paid</td><td class="right">${partialPaid}</td><td class="right">${totalCustomers ? Math.round(partialPaid/totalCustomers*100) : 0}%</td></tr>
+            <tr><td>Fully Paid</td><td class="right">${paidCustomers}</td><td class="right">${totalCustomers ? Math.round(paidCustomers/totalCustomers*100) : 0}%</td></tr>
+          </tbody></table>${printReportQR(getAppBaseUrl())}`
+        };
         closeModal();
-        triggerPrint(html);
+        triggerPrint(printBuild(cfg));
       });
     }
 
@@ -4976,7 +4995,7 @@
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
           <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
-          <strong>App version:</strong> v1.10.3 (Invoice UX Fixes)
+          <strong>App version:</strong> v1.10.4 (Print Engine)
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -5054,7 +5073,7 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.10.3</p>
+            <p>RGCE SparkDesk v1.10.4</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
@@ -5099,7 +5118,7 @@
       if (!window.FB) { console.error('Firebase not loaded yet'); return false; }
       try {
         setupAuth();
-        console.log('Auth setup complete (v1.10.3)');
+        console.log('Auth setup complete (v1.10.4)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
@@ -5419,7 +5438,6 @@
         });
       }
 
-      /* Invoice-form keyboard shortcuts (Alt+N = new row, Alt+D = delete last row, Ctrl+Enter = preview+print) */
       document.addEventListener('keydown', (e) => {
         const invPanel = document.getElementById('invoiceFormPanel');
         if (!invPanel || !invPanel.classList.contains('visible')) return;
@@ -5439,7 +5457,6 @@
         }
       });
 
-      /* Global Enter key handler */
       document.addEventListener('keydown', function(e) {
         if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
         var target = e.target;
