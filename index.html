@@ -915,11 +915,23 @@
       flex: 0 0 auto; text-align: center; padding: 0 12px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .auto-page .ap-header-qr svg { width: 42px; height: 42px; display: block; }
+    .auto-page .ap-header-qr svg { width: 60px; height: 60px; display: block; }
     .auto-page .ap-header-qr .ap-header-qr-label {
-      font-size: 6.5px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.3px; margin-top: 1px; color: #333; line-height: 1.1;
+      font-size: 7px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.4px; margin-top: 2px; color: #333; line-height: 1.15;
       white-space: nowrap;
+    }
+    .auto-page .ap-header-continued {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 4px; border-bottom: 1px solid #000;
+      margin-bottom: 6px; flex: 0 0 auto;
+    }
+    .auto-page .ap-cont-title {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.7px; color: #333;
+    }
+    .auto-page .ap-cont-page {
+      font-size: 9px; color: #57606a; font-weight: 700;
     }
     .auto-page .ap-info { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; flex: 0 0 auto; }
     .auto-page .ap-info-label { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; display: block; margin-bottom: 2px; color: #333; }
@@ -1828,9 +1840,21 @@
       opts = opts || {};
       const id = newReportId();
       const url = getAppBaseUrl() + '?report=' + encodeURIComponent(id);
+
+      const cfgForPublish = Object.assign({}, cfg);
+      publishReportAsync(id, cfgForPublish).catch(() => {});
+
       cfg.qrUrl = url;
       cfg.qrLabel = opts.qrLabel || 'Scan';
-      publishReportAsync(id, cfg).catch(() => {});
+      const footerQR = `<div class="ap-words" style="margin-top:10px">
+        <div>
+          <span class="ap-words-label">Scan to view this report online</span>
+          <em style="font-style:normal;font-size:9px;color:#57606a;word-break:break-all;">${escapeHtml(url)}</em>
+        </div>
+        <div class="ap-qr-cell">${printQRSVG(url, 100)}</div>
+      </div>`;
+      cfg.last = (cfg.last || '') + footerQR;
+
       triggerPrint(printBuild(cfg));
     }
 
@@ -1845,23 +1869,38 @@
       ).join('');
       if (!cfg.rows.length) rows = `<tr><td colspan="${cols.length}" class="center">${cfg.emptyText || 'No records.'}</td></tr>`;
       if (!cfg.noFill) rows += `<tr class="fill">${cols.map(() => '<td></td>').join('')}</tr>`;
-      const meta = cfg.meta.map(m => `<div class="ap-meta">${m[0]}: <strong>${escapeHtml(m[1])}</strong></div>`).join('') +
-                   (cfg.nopage ? '' : `<div class="ap-meta">Page: <strong>${no} of ${total}</strong></div>`);
-      const info = cfg.info ? `<div class="ap-info">${cfg.info.map(i => `<div><div class="ap-info-label">${i[0]}</div><div class="ap-info-value">${i[1]}</div></div>`).join('')}</div>` : '';
 
-      let headerQR = '<div class="ap-header-qr"></div>';
-      if (cfg.qrUrl) {
-        const qrSvg = printQRSVG(cfg.qrUrl, 42);
-        headerQR = `<div class="ap-header-qr">${qrSvg}<div class="ap-header-qr-label">${escapeHtml(cfg.qrLabel || 'Scan')}</div></div>`;
-      }
+      const isFirstPage = (no === 1);
 
-      return `<div class="auto-page"><div class="ap-body">
-        <div class="ap-header">
+      let headerHTML;
+      let infoHTML = '';
+      let preHTML = '';
+
+      if (isFirstPage) {
+        let headerQR = '';
+        if (cfg.qrUrl) {
+          const qrSvg = printQRSVG(cfg.qrUrl, 60);
+          headerQR = `<div class="ap-header-qr">${qrSvg}<div class="ap-header-qr-label">${escapeHtml(cfg.qrLabel || 'Scan')}</div></div>`;
+        }
+        const meta = cfg.meta.map(m => `<div class="ap-meta">${m[0]}: <strong>${escapeHtml(m[1])}</strong></div>`).join('') +
+                     (cfg.nopage ? '' : `<div class="ap-meta">Page: <strong>${no} of ${total}</strong></div>`);
+        headerHTML = `<div class="ap-header">
           <div>${PRINT_BRAND}</div>
           ${headerQR}
           <div><div class="ap-title">${cfg.title}</div>${meta}</div>
-        </div>
-        ${info}${cfg.pre || ''}
+        </div>`;
+        infoHTML = cfg.info ? `<div class="ap-info">${cfg.info.map(i => `<div><div class="ap-info-label">${i[0]}</div><div class="ap-info-value">${i[1]}</div></div>`).join('')}</div>` : '';
+        preHTML = cfg.pre || '';
+      } else {
+        headerHTML = `<div class="ap-header-continued">
+          <span class="ap-cont-title">${cfg.title} (continued)</span>
+          <span class="ap-cont-page">Page ${no} of ${total}</span>
+        </div>`;
+      }
+
+      return `<div class="auto-page"><div class="ap-body">
+        ${headerHTML}
+        ${infoHTML}${preHTML}
         <div class="ap-section">${cfg.section}</div>
         <div class="ap-table-wrap${cfg.noFill ? ' nofill' : ''}">
           <table class="ap-table"><colgroup>${cols.map(c => `<col${c.w ? ` style="width:${c.w}%"` : ''}>`).join('')}</colgroup>
@@ -1888,11 +1927,12 @@
       let i = 0;
       for (let guard = 0; guard < 500; guard++) {
         const r = R - i;
-        if (r <= 0 || printFits(printPageHTML(cfg, i, r, true, 1, 99))) {
+        const pageNo = specs.length + 1;
+        if (r <= 0 || printFits(printPageHTML(cfg, i, r, true, pageNo, 99))) {
           specs.push([i, Math.max(r, 0), true]); break;
         }
         let n = 1;
-        while (n < r && printFits(printPageHTML(cfg, i, n + 1, false, 1, 99))) n++;
+        while (n < r && printFits(printPageHTML(cfg, i, n + 1, false, pageNo, 99))) n++;
         specs.push([i, n, false]); i += n;
       }
       return specs;
@@ -1916,12 +1956,6 @@
       });
       measure.innerHTML = '';
       return `<div class="print-stack">${out.join('')}</div>`;
-    }
-
-    function printReportQR(text, label) {
-      const url = text || getAppBaseUrl();
-      const qr = printQRSVG(url, 90);
-      return `<div class="ap-words" style="margin-top:8px"><div><span class="ap-words-label">${label || 'Scan to view online'}</span><em style="font-style:normal;font-size:9.5px;color:#57606a;">${escapeHtml(url)}</em></div><div class="ap-qr-cell">${qr}</div></div>`;
     }
 
     function numberToWords(num) {
