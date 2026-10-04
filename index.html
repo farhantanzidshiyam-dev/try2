@@ -911,6 +911,16 @@
     .auto-page .ap-brand-meta { font-size: 9.5px; line-height: 1.35; margin-top: 2px; color: #333; }
     .auto-page .ap-title { font-weight: 800; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; text-align: right; line-height: 1.1; }
     .auto-page .ap-meta { font-size: 9.5px; text-align: right; margin-top: 2px; line-height: 1.35; }
+    .auto-page .ap-header-qr {
+      flex: 0 0 auto; text-align: center; padding: 0 12px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .auto-page .ap-header-qr svg { width: 42px; height: 42px; display: block; }
+    .auto-page .ap-header-qr .ap-header-qr-label {
+      font-size: 6.5px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.3px; margin-top: 1px; color: #333; line-height: 1.1;
+      white-space: nowrap;
+    }
     .auto-page .ap-info { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; flex: 0 0 auto; }
     .auto-page .ap-info-label { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; display: block; margin-bottom: 2px; color: #333; }
     .auto-page .ap-info-value { font-size: 10.5px; line-height: 1.35; }
@@ -1773,6 +1783,57 @@
       } catch (e) { return ''; }
     }
 
+    function newReportId() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let id = 'RPT-';
+      for (let i = 0; i < 10; i++) id += chars[Math.floor(Math.random() * chars.length)];
+      return id;
+    }
+
+    async function publishReportAsync(id, cfg) {
+      if (!currentUser) return false;
+      try {
+        const ref = window.FB.doc(window.FB.db, 'public_reports', id);
+        const snapshot = {
+          reportId: id,
+          cfg: {
+            title: cfg.title || '',
+            meta: cfg.meta || [],
+            info: cfg.info || [],
+            pre: cfg.pre || '',
+            section: cfg.section || '',
+            cols: (cfg.cols || []).map(c => ({ h: c.h || '', w: c.w || 0, a: c.a || '', b: c.b ? 1 : 0 })),
+            rows: (cfg.rows || []).map(r => r.map(v => v == null ? '' : String(v))),
+            emptyText: cfg.emptyText || '',
+            rowH: cfg.rowH || 0,
+            noFill: cfg.noFill ? 1 : 0,
+            last: cfg.last || '',
+            footer: cfg.footer || ''
+          },
+          shopName: 'Roza Gift Corner & Electric',
+          shopPhone: '+8801715986646',
+          shopAddress: 'Moshjid Market, Naohata Mor, Mohadevpur, Naogaon',
+          publishedBy: currentUser.uid,
+          publishedAt: window.FB.serverTimestamp()
+        };
+        await window.FB.setDoc(ref, snapshot, { merge: false });
+        return true;
+      } catch (e) {
+        console.warn('Failed to publish report publicly:', e);
+        return false;
+      }
+    }
+
+    function printReportWithQR(cfg, opts) {
+      opts = opts || {};
+      const id = newReportId();
+      const url = getAppBaseUrl() + '?report=' + encodeURIComponent(id);
+      cfg.qrUrl = url;
+      cfg.qrLabel = opts.qrLabel || 'Scan';
+      publishReportAsync(id, cfg).catch(() => {});
+      triggerPrint(printBuild(cfg));
+    }
+
     const PRINT_BRAND = `<div class="ap-brand">Roza Gift Corner &amp; Electric</div><div class="ap-brand-meta">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon<br>Phone: +8801715986646</div>`;
 
     function printPageHTML(cfg, from, n, last, no, total) {
@@ -1787,9 +1848,17 @@
       const meta = cfg.meta.map(m => `<div class="ap-meta">${m[0]}: <strong>${escapeHtml(m[1])}</strong></div>`).join('') +
                    (cfg.nopage ? '' : `<div class="ap-meta">Page: <strong>${no} of ${total}</strong></div>`);
       const info = cfg.info ? `<div class="ap-info">${cfg.info.map(i => `<div><div class="ap-info-label">${i[0]}</div><div class="ap-info-value">${i[1]}</div></div>`).join('')}</div>` : '';
+
+      let headerQR = '<div class="ap-header-qr"></div>';
+      if (cfg.qrUrl) {
+        const qrSvg = printQRSVG(cfg.qrUrl, 42);
+        headerQR = `<div class="ap-header-qr">${qrSvg}<div class="ap-header-qr-label">${escapeHtml(cfg.qrLabel || 'Scan')}</div></div>`;
+      }
+
       return `<div class="auto-page"><div class="ap-body">
         <div class="ap-header">
           <div>${PRINT_BRAND}</div>
+          ${headerQR}
           <div><div class="ap-title">${cfg.title}</div>${meta}</div>
         </div>
         ${info}${cfg.pre || ''}
@@ -2290,7 +2359,7 @@
           customerCount: customers.length,
           invoiceCount: invoices.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.10.4-print-engine'
+          appVersion: '1.10.5-report-publish'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         lastPushedInvoiceHash = JSON.stringify(invoices);
@@ -2473,7 +2542,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.4' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.5' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -2959,7 +3028,6 @@
       const all = buildAllTransactions();
       const filtered = filterTransactions(all);
       const sum = k => filtered.filter(t => (t.type || '').toLowerCase().includes(k)).reduce((s, t) => s + (+t.amount || 0), 0);
-      const refUrl = getAppBaseUrl();
 
       const cfg = {
         title: 'Transaction Statement',
@@ -2975,9 +3043,9 @@
         ],
         rows: filtered.map((t, i) => [i + 1, escapeHtml(t.date || '—'), `<strong>${escapeHtml(t.customerName)}</strong>`, escapeHtml(t.type), formatMoneyOrZero(t.amount), escapeHtml(t.note || '')]),
         emptyText: 'No transactions match.',
-        last: `<table class="ap-totals"><tr><td>Total Transactions</td><td>${filtered.length}</td></tr><tr><td>Payments Received</td><td>${formatMoneyOrZero(sum('receive'))}</td></tr><tr><td>Due Added</td><td>${formatMoneyOrZero(sum('due added'))}</td></tr><tr><td>Adjustments</td><td>${formatMoneyOrZero(sum('adjust'))}</td></tr></table>${printReportQR(refUrl)}`
+        last: `<table class="ap-totals"><tr><td>Total Transactions</td><td>${filtered.length}</td></tr><tr><td>Payments Received</td><td>${formatMoneyOrZero(sum('receive'))}</td></tr><tr><td>Due Added</td><td>${formatMoneyOrZero(sum('due added'))}</td></tr><tr><td>Adjustments</td><td>${formatMoneyOrZero(sum('adjust'))}</td></tr></table>`
       };
-      triggerPrint(printBuild(cfg));
+      printReportWithQR(cfg);
     }
 
     function applyFilters() {
@@ -3403,7 +3471,6 @@
       if (!c) return;
       const currentDue = getCurrentDue(c);
       const status = getStatus(c);
-      const refUrl = getAppBaseUrl() + '?stmt=' + encodeURIComponent(c.id);
 
       const buildCfg = (half) => ({
         title: half ? 'Statement' : 'Account Statement',
@@ -3426,27 +3493,35 @@
           ['Total Paid', formatMoneyOrZero(c.paid || 0)],
           ['<strong>Current Outstanding</strong>', `<strong>${formatMoneyOrZero(currentDue)}</strong>`]
         ],
-        last: half ? '' : printReportQR(refUrl, 'Scan to view online')
+        last: ''
       });
 
+      const fullCfg = buildCfg(false);
+      const id_rpt = newReportId();
+      const url = getAppBaseUrl() + '?report=' + encodeURIComponent(id_rpt);
+
       if (copyType === 'both') {
+        fullCfg.qrUrl = url;
+        fullCfg.qrLabel = 'Scan';
+        publishReportAsync(id_rpt, fullCfg).catch(() => {});
+        const halfCfg = buildCfg(true);
+        halfCfg.qrUrl = url;
+        halfCfg.qrLabel = 'Scan';
         const single = (label) => {
-          const cfg = buildCfg(true);
-          const p = printPageHTML(cfg, 0, cfg.rows.length, true, 1, 1);
+          const p = printPageHTML(halfCfg, 0, halfCfg.rows.length, true, 1, 1);
           return `<div class="ap-both-slot"><div class="ap-both-label">${label}</div>${p}</div>`;
         };
         const html = `<div class="print-stack"><div class="auto-page"><div class="ap-both-sheet">${single('Customer Copy')}<div class="ap-cut-line"><span>✂ Cut Here</span></div>${single('Store Copy')}</div></div></div>`;
         triggerPrint(html);
         return;
       }
-      triggerPrint(printBuild(buildCfg(false)));
+      printReportWithQR(fullCfg);
     }
 
     function printHistory(id) {
       const c = customers.find(x => x.id === id);
       if (!c) return;
       const tx = c.transactionHistory || [];
-      const refUrl = getAppBaseUrl() + '?stmt=' + encodeURIComponent(c.id);
 
       const cfg = {
         title: 'Payment History',
@@ -3465,9 +3540,9 @@
         ],
         rows: tx.map((t, i) => [i + 1, escapeHtml(t.date || ''), escapeHtml(t.type || ''), formatMoneyOrZero(t.amount), escapeHtml(t.note || '')]),
         emptyText: 'No transaction history recorded.',
-        last: printReportQR(refUrl, 'Scan to view online')
+        last: ''
       };
-      triggerPrint(printBuild(cfg));
+      printReportWithQR(cfg);
     }
 
     function printFilteredReport() {
@@ -3485,7 +3560,6 @@
       const tDue = filteredCustomers.reduce((s, c) => s + (c.due || 0), 0);
       const tPaid = filteredCustomers.reduce((s, c) => s + (c.paid || 0), 0);
       const tOut = filteredCustomers.reduce((s, c) => s + getCurrentDue(c), 0);
-      const refUrl = getAppBaseUrl();
 
       const cfg = {
         title: 'Customer Report',
@@ -3503,15 +3577,14 @@
           { h: 'Status', w: 11, a: 'center' }
         ],
         rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), formatMoneyOrZero(c.paid || 0), formatMoneyOrZero(getCurrentDue(c)), escapeHtml(getStatus(c))]),
-        last: `<table class="ap-totals"><tr><td>Total Due</td><td>${formatMoneyOrZero(tDue)}</td></tr><tr><td>Total Paid</td><td>${formatMoneyOrZero(tPaid)}</td></tr><tr class="grand"><td>Total Outstanding</td><td>${formatMoneyOrZero(tOut)}</td></tr></table>${printReportQR(refUrl)}`
+        last: `<table class="ap-totals"><tr><td>Total Due</td><td>${formatMoneyOrZero(tDue)}</td></tr><tr><td>Total Paid</td><td>${formatMoneyOrZero(tPaid)}</td></tr><tr class="grand"><td>Total Outstanding</td><td>${formatMoneyOrZero(tOut)}</td></tr></table>`
       };
-      triggerPrint(printBuild(cfg));
+      printReportWithQR(cfg);
     }
 
     function printManualReport() {
       applyFilters();
       const tDue = filteredCustomers.reduce((s, c) => s + (c.due || 0), 0);
-      const refUrl = getAppBaseUrl();
 
       const cfg = {
         title: 'Manual Collection Sheet',
@@ -3529,9 +3602,9 @@
           { h: 'Remaining (fill)', w: 17, a: 'right' }
         ],
         rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), '', '']),
-        last: `<table class="ap-totals"><tr class="grand"><td>Total Opening Due</td><td>${formatMoneyOrZero(tDue)}</td></tr></table>${printReportQR(refUrl)}`
+        last: `<table class="ap-totals"><tr class="grand"><td>Total Opening Due</td><td>${formatMoneyOrZero(tDue)}</td></tr></table>`
       };
-      triggerPrint(printBuild(cfg));
+      printReportWithQR(cfg);
     }
 
     /* ============================================================
@@ -4477,6 +4550,8 @@
       const items = inv.items || [];
       const cfg = {
         title: 'Invoice',
+        qrUrl: publicUrl,
+        qrLabel: 'Scan',
         meta: [
           ['Invoice #', inv.invoiceNumber],
           ['Date', inv.dateDisplay],
@@ -4679,14 +4754,128 @@
       `;
     }
 
+    async function showPublicReportView(reportId) {
+      window.__publicInvoiceMode = true;
+      const overlay = document.getElementById('authOverlay');
+      if (overlay) overlay.style.display = 'none';
+      document.querySelectorAll('.gov-strip, .official-header, .search-wrapper, .app-body, .app-footer, .admin-link').forEach(el => {
+        if (el) el.style.display = 'none';
+      });
+      let container = document.getElementById('publicReportView');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'publicReportView';
+        container.style.cssText = 'min-height:100vh;padding:24px 16px;background:var(--bg);color:var(--text);font-family:inherit;';
+        document.body.appendChild(container);
+      }
+      container.innerHTML = `<div style="text-align:center;padding:80px 20px;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:var(--primary);"></i><div style="margin-top:14px;font-size:14px;">Loading report…</div></div>`;
+      try {
+        if (!window.FB) throw new Error('Firebase not loaded');
+        const ref = window.FB.doc(window.FB.db, 'public_reports', reportId);
+        const snap = await window.FB.getDoc(ref);
+        if (!snap.exists()) {
+          container.innerHTML = `<div style="max-width:520px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:40px 24px;">
+            <i class="fas fa-file-circle-exclamation" style="font-size:48px;color:var(--danger);margin-bottom:16px;pointer-events:none;"></i>
+            <h2 style="margin:0 0 8px 0;color:var(--text);font-size:20px;">Report Not Found</h2>
+            <p style="color:var(--muted);margin:0;font-size:13px;">Report <strong>${escapeHtml(reportId)}</strong> does not exist or has been removed.</p>
+          </div>`;
+          return;
+        }
+        renderPublicReportView(container, snap.data());
+      } catch (e) {
+        console.error('Public report view failed:', e);
+        container.innerHTML = `<div style="max-width:520px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:40px 24px;">
+          <i class="fas fa-triangle-exclamation" style="font-size:48px;color:var(--warning);margin-bottom:16px;pointer-events:none;"></i>
+          <h2 style="margin:0 0 8px 0;color:var(--text);font-size:20px;">Could Not Load</h2>
+          <p style="color:var(--muted);margin:0;font-size:13px;">Please check your internet connection and try again.</p>
+        </div>`;
+      }
+    }
+
+    function renderPublicReportView(container, data) {
+      const cfg = data.cfg || {};
+      const cols = cfg.cols || [];
+      const rows = cfg.rows || [];
+      const rowsHTML = rows.map(r =>
+        '<tr>' + cols.map((c, j) => {
+          const styleAlign = c.a === 'right' ? 'text-align:right;' : c.a === 'center' ? 'text-align:center;' : '';
+          const bold = c.b ? 'font-weight:700;' : '';
+          return `<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;${styleAlign}${bold}">${r[j] == null ? '' : r[j]}</td>`;
+        }).join('') + '</tr>'
+      ).join('');
+      const colsHTML = cols.map(c => {
+        const align = c.a === 'right' ? 'text-align:right;' : c.a === 'center' ? 'text-align:center;' : 'text-align:left;';
+        return `<th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);border-bottom:2px solid var(--border);${align}">${c.h}</th>`;
+      }).join('');
+      const metaHTML = (cfg.meta || []).map(m => `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:3px;">${m[0]}: <strong style="color:#fff;">${escapeHtml(m[1])}</strong></div>`).join('');
+      const infoHTML = cfg.info && cfg.info.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;padding:18px 24px;border-bottom:1px solid var(--border);">${cfg.info.map(i => `<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;margin-bottom:4px;">${i[0]}</div><div style="font-size:13px;line-height:1.45;">${i[1]}</div></div>`).join('')}</div>` : '';
+      const emptyRow = `<tr><td colspan="${cols.length || 1}" style="padding:24px;text-align:center;color:var(--muted);">${escapeHtml(cfg.emptyText || 'No records.')}</td></tr>`;
+
+      container.innerHTML = `
+        <div style="max-width:920px;margin:0 auto;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:10px 20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;">
+              <div style="width:38px;height:38px;background:#1f4e79;color:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-shield-halved"></i></div>
+              <div style="text-align:left;">
+                <div style="font-size:14px;font-weight:700;color:var(--text);">RGCE SparkDesk</div>
+                <div style="font-size:11px;color:var(--muted);">Report Verification</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.3px;">${escapeHtml(data.shopName || 'Roza Gift Corner & Electric')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(data.shopAddress || '')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Phone: ${escapeHtml(data.shopPhone || '')}</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md);">
+            <div style="background:#1f4e79;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:1px;">Report</div>
+                <div style="font-size:20px;font-weight:800;margin-top:2px;">${escapeHtml(cfg.title || 'Report')}</div>
+              </div>
+              <div style="text-align:right;">${metaHTML}</div>
+            </div>
+            ${infoHTML}
+            ${cfg.pre ? `<div style="padding:12px 24px 0;">${cfg.pre}</div>` : ''}
+            <div style="padding:18px 24px;overflow-x:auto;">
+              ${cfg.section ? `<div style="font-size:10px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">${escapeHtml(cfg.section)}</div>` : ''}
+              <table style="width:100%;border-collapse:collapse;">
+                <thead><tr>${colsHTML}</tr></thead>
+                <tbody>${rowsHTML || emptyRow}</tbody>
+              </table>
+            </div>
+            ${cfg.last ? `<div style="padding:0 24px 20px;">${cfg.last}</div>` : ''}
+            <div style="padding:16px 24px 20px;border-top:1px dashed var(--border);text-align:center;font-size:11px;color:var(--muted);">
+              Verified report from <strong>${escapeHtml(data.shopName || 'Roza Gift Corner & Electric')}</strong>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--muted);">
+            © 2025 Roza Gift Corner &amp; Electric
+          </div>
+        </div>
+      `;
+    }
+
     function checkPublicInvoiceView() {
       const params = new URLSearchParams(window.location.search);
+      const reportId = params.get('report');
       const invNum = params.get('inv');
-      if (!invNum) return false;
-      const show = () => showPublicInvoiceView(invNum);
-      if (window.FB) show();
-      else window.addEventListener('firebase-ready', show, { once: true });
-      return true;
+      if (reportId) {
+        const show = () => showPublicReportView(reportId);
+        if (window.FB) show();
+        else window.addEventListener('firebase-ready', show, { once: true });
+        return true;
+      }
+      if (invNum) {
+        const show = () => showPublicInvoiceView(invNum);
+        if (window.FB) show();
+        else window.addEventListener('firebase-ready', show, { once: true });
+        return true;
+      }
+      return false;
     }
 
     window.__app = {
@@ -4764,10 +4953,10 @@
             <tr><td>With Due</td><td class="right">${withDue}</td><td class="right">${totalCustomers ? Math.round(withDue/totalCustomers*100) : 0}%</td></tr>
             <tr><td>Partial Paid</td><td class="right">${partialPaid}</td><td class="right">${totalCustomers ? Math.round(partialPaid/totalCustomers*100) : 0}%</td></tr>
             <tr><td>Fully Paid</td><td class="right">${paidCustomers}</td><td class="right">${totalCustomers ? Math.round(paidCustomers/totalCustomers*100) : 0}%</td></tr>
-          </tbody></table>${printReportQR(getAppBaseUrl())}`
+          </tbody></table>`
         };
         closeModal();
-        triggerPrint(printBuild(cfg));
+        printReportWithQR(cfg);
       });
     }
 
@@ -4995,7 +5184,7 @@
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
           <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
-          <strong>App version:</strong> v1.10.4 (Print Engine)
+          <strong>App version:</strong> v1.10.5 (Report Publishing + Header QR)
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -5073,7 +5262,7 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.10.4</p>
+            <p>RGCE SparkDesk v1.10.5</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
@@ -5118,7 +5307,7 @@
       if (!window.FB) { console.error('Firebase not loaded yet'); return false; }
       try {
         setupAuth();
-        console.log('Auth setup complete (v1.10.4)');
+        console.log('Auth setup complete (v1.10.5)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
