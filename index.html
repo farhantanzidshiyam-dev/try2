@@ -1795,57 +1795,52 @@
       } catch (e) { return ''; }
     }
 
-    function newReportId() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let id = 'RPT-';
-      for (let i = 0; i < 10; i++) id += chars[Math.floor(Math.random() * chars.length)];
-      return id;
+    function escHSafe(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
-    async function publishReportAsync(id, cfg) {
+    async function ensurePublicShopAsync() {
       if (!currentUser) return false;
       try {
-        const ref = window.FB.doc(window.FB.db, 'public_reports', id);
-        const snapshot = {
-          reportId: id,
-          cfg: {
-            title: cfg.title || '',
-            meta: cfg.meta || [],
-            info: cfg.info || [],
-            pre: cfg.pre || '',
-            section: cfg.section || '',
-            cols: (cfg.cols || []).map(c => ({ h: c.h || '', w: c.w || 0, a: c.a || '', b: c.b ? 1 : 0 })),
-            rows: (cfg.rows || []).map(r => r.map(v => v == null ? '' : String(v))),
-            emptyText: cfg.emptyText || '',
-            rowH: cfg.rowH || 0,
-            noFill: cfg.noFill ? 1 : 0,
-            last: cfg.last || '',
-            footer: cfg.footer || ''
-          },
+        const ref = window.FB.doc(window.FB.db, 'public_shops', currentUser.uid);
+        await window.FB.setDoc(ref, {
+          ownerUid: currentUser.uid,
           shopName: 'Roza Gift Corner & Electric',
           shopPhone: '+8801715986646',
           shopAddress: 'Moshjid Market, Naohata Mor, Mohadevpur, Naogaon',
-          publishedBy: currentUser.uid,
-          publishedAt: window.FB.serverTimestamp()
-        };
-        await window.FB.setDoc(ref, snapshot, { merge: false });
+          updatedAt: window.FB.serverTimestamp()
+        }, { merge: true });
         return true;
       } catch (e) {
-        console.warn('Failed to publish report publicly:', e);
+        console.warn('ensurePublicShopAsync failed:', e);
         return false;
       }
     }
 
+    function buildLiveReportUrl(reportType, params) {
+      if (!currentUser) return getAppBaseUrl();
+      const base = getAppBaseUrl();
+      const q = new URLSearchParams();
+      q.set('report', reportType);
+      q.set('owner', currentUser.uid);
+      if (params) {
+        Object.keys(params).forEach(k => {
+          if (params[k] != null && params[k] !== '') q.set(k, params[k]);
+        });
+      }
+      return base + '?' + q.toString();
+    }
+
     function printReportWithQR(cfg, opts) {
       opts = opts || {};
-      const id = newReportId();
-      const url = getAppBaseUrl() + '?report=' + encodeURIComponent(id);
+      const url = opts.reportUrl || getAppBaseUrl();
 
-      const cfgForPublish = Object.assign({}, cfg);
-      publishReportAsync(id, cfgForPublish).catch(() => {});
+      // fire-and-forget: make sure public shop doc exists for QR scans
+      ensurePublicShopAsync().catch(() => {});
 
       cfg.qrUrl = url;
       cfg.qrLabel = opts.qrLabel || 'Scan';
+
       const footerQR = `<div class="ap-words" style="margin-top:10px">
         <div>
           <span class="ap-words-label">Scan to view this report online</span>
@@ -2331,6 +2326,7 @@
           });
           lastPushedInvoiceHash = JSON.stringify(invoices);
           try { rebuildProductIndex(); } catch (e) {}
+          try { ensurePublicShopAsync(); } catch (e) {}
         } else {
           customers = []; invoices = [];
           await cloudPush(true);
@@ -2393,7 +2389,7 @@
           customerCount: customers.length,
           invoiceCount: invoices.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.10.5-report-publish'
+          appVersion: '1.10.6-live-reports'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         lastPushedInvoiceHash = JSON.stringify(invoices);
@@ -2576,7 +2572,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.5' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.10.6' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -3079,7 +3075,7 @@
         emptyText: 'No transactions match.',
         last: `<table class="ap-totals"><tr><td>Total Transactions</td><td>${filtered.length}</td></tr><tr><td>Payments Received</td><td>${formatMoneyOrZero(sum('receive'))}</td></tr><tr><td>Due Added</td><td>${formatMoneyOrZero(sum('due added'))}</td></tr><tr><td>Adjustments</td><td>${formatMoneyOrZero(sum('adjust'))}</td></tr></table>`
       };
-      printReportWithQR(cfg);
+      printReportWithQR(cfg, { reportUrl: buildLiveReportUrl('transaction_statement') });
     }
 
     function applyFilters() {
@@ -3531,13 +3527,11 @@
       });
 
       const fullCfg = buildCfg(false);
-      const id_rpt = newReportId();
-      const url = getAppBaseUrl() + '?report=' + encodeURIComponent(id_rpt);
+      const url = buildLiveReportUrl('customer_statement', { id: c.id });
 
       if (copyType === 'both') {
         fullCfg.qrUrl = url;
         fullCfg.qrLabel = 'Scan';
-        publishReportAsync(id_rpt, fullCfg).catch(() => {});
         const halfCfg = buildCfg(true);
         halfCfg.qrUrl = url;
         halfCfg.qrLabel = 'Scan';
@@ -3549,7 +3543,7 @@
         triggerPrint(html);
         return;
       }
-      printReportWithQR(fullCfg);
+      printReportWithQR(fullCfg, { reportUrl: url });
     }
 
     function printHistory(id) {
@@ -3576,7 +3570,7 @@
         emptyText: 'No transaction history recorded.',
         last: ''
       };
-      printReportWithQR(cfg);
+      printReportWithQR(cfg, { reportUrl: buildLiveReportUrl('payment_history', { id: c.id }) });
     }
 
     function printFilteredReport() {
@@ -3613,7 +3607,14 @@
         rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), formatMoneyOrZero(c.paid || 0), formatMoneyOrZero(getCurrentDue(c)), escapeHtml(getStatus(c))]),
         last: `<table class="ap-totals"><tr><td>Total Due</td><td>${formatMoneyOrZero(tDue)}</td></tr><tr><td>Total Paid</td><td>${formatMoneyOrZero(tPaid)}</td></tr><tr class="grand"><td>Total Outstanding</td><td>${formatMoneyOrZero(tOut)}</td></tr></table>`
       };
-      printReportWithQR(cfg);
+      printReportWithQR(cfg, {
+        reportUrl: buildLiveReportUrl('customer_report', {
+          q: search || '',
+          addr: addr || '',
+          status: stat || '',
+          source: src || ''
+        })
+      });
     }
 
     function printManualReport() {
@@ -3638,7 +3639,7 @@
         rows: filteredCustomers.map((c, i) => [i + 1, `<strong>${escapeHtml(c.name)}</strong>`, escapeHtml(c.address || ''), escapeHtml(c.source || ''), formatMoneyOrZero(c.due || 0), '', '']),
         last: `<table class="ap-totals"><tr class="grand"><td>Total Opening Due</td><td>${formatMoneyOrZero(tDue)}</td></tr></table>`
       };
-      printReportWithQR(cfg);
+      printReportWithQR(cfg, { reportUrl: buildLiveReportUrl('manual_collection') });
     }
 
     /* ============================================================
@@ -4788,7 +4789,7 @@
       `;
     }
 
-    async function showPublicReportView(reportId) {
+    async function showPublicReportView(reportType, ownerUid, params) {
       window.__publicInvoiceMode = true;
       const overlay = document.getElementById('authOverlay');
       if (overlay) overlay.style.display = 'none';
@@ -4802,32 +4803,222 @@
         container.style.cssText = 'min-height:100vh;padding:24px 16px;background:var(--bg);color:var(--text);font-family:inherit;';
         document.body.appendChild(container);
       }
-      container.innerHTML = `<div style="text-align:center;padding:80px 20px;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:var(--primary);"></i><div style="margin-top:14px;font-size:14px;">Loading report…</div></div>`;
+      container.innerHTML = `<div style="text-align:center;padding:80px 20px;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:var(--primary);"></i><div style="margin-top:14px;font-size:14px;">Generating report from live cloud data…</div></div>`;
+
       try {
         if (!window.FB) throw new Error('Firebase not loaded');
-        const ref = window.FB.doc(window.FB.db, 'public_reports', reportId);
-        const snap = await window.FB.getDoc(ref);
-        if (!snap.exists()) {
-          container.innerHTML = `<div style="max-width:520px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:40px 24px;">
-            <i class="fas fa-file-circle-exclamation" style="font-size:48px;color:var(--danger);margin-bottom:16px;pointer-events:none;"></i>
-            <h2 style="margin:0 0 8px 0;color:var(--text);font-size:20px;">Report Not Found</h2>
-            <p style="color:var(--muted);margin:0;font-size:13px;">Report <strong>${escapeHtml(reportId)}</strong> does not exist or has been removed.</p>
-          </div>`;
-          return;
+        if (!ownerUid) throw new Error('Missing owner parameter.');
+
+        const shopRef = window.FB.doc(window.FB.db, 'shops', ownerUid);
+        const shopSnap = await window.FB.getDoc(shopRef);
+        if (!shopSnap.exists()) throw new Error('Shop data not found.');
+
+        const shop = shopSnap.data();
+        const liveCustomers = Array.isArray(shop.customers) ? shop.customers : [];
+
+        let cfg, titleLabel;
+
+        const getCurDue = c => Math.max(0, (c.due || 0) - (c.paid || 0));
+        const getStat = c => {
+          const due = c.due || 0, paid = c.paid || 0;
+          const cd = getCurDue(c);
+          if (due === 0 && paid === 0) return 'Hidden Due';
+          if (cd > 0 && paid === 0) return 'Due';
+          if (cd > 0 && paid > 0) return 'Partial Paid';
+          return 'Paid';
+        };
+        const money = v => Math.round(v || 0).toLocaleString('en-US');
+
+        if (reportType === 'customer_report') {
+          let list = liveCustomers.slice();
+          const q = (params.q || '').trim().toLowerCase();
+          const addr = params.addr || '';
+          const stat = params.status || '';
+          const src = params.source || '';
+          if (q) list = list.filter(c => `${c.name || ''} ${c.phone || ''} ${c.address || ''} ${c.source || ''}`.toLowerCase().includes(q));
+          if (addr) list = list.filter(c => c.address === addr);
+          if (stat) list = list.filter(c => getStat(c) === stat);
+          if (src) list = list.filter(c => c.source === src);
+          const tDue = list.reduce((s,c) => s + (c.due || 0), 0);
+          const tPaid = list.reduce((s,c) => s + (c.paid || 0), 0);
+          const tOut = list.reduce((s,c) => s + getCurDue(c), 0);
+          const filterText = [
+            q ? `Search: "${q}"` : null,
+            addr ? `Address: ${addr}` : null,
+            stat ? `Status: ${stat}` : null,
+            src ? `Source: ${src}` : null
+          ].filter(Boolean).join('  ·  ') || 'All records';
+          titleLabel = 'Customer Report';
+          cfg = {
+            title: 'Customer Report',
+            meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', list.length]],
+            pre: `<div class="ap-notes"><strong>Filters applied:</strong> ${escHSafe(filterText)}</div>`,
+            section: 'Customers',
+            cols: [
+              { h: '#', w: 5, a: 'center' },
+              { h: 'Name', w: 21 },
+              { h: 'Address', w: 18 },
+              { h: 'Source', w: 8, a: 'center' },
+              { h: 'Due', w: 12, a: 'right' },
+              { h: 'Paid', w: 12, a: 'right' },
+              { h: 'Outstanding', w: 13, a: 'right' },
+              { h: 'Status', w: 11, a: 'center' }
+            ],
+            rows: list.map((c, i) => [i + 1, `<strong>${escHSafe(c.name)}</strong>`, escHSafe(c.address || ''), escHSafe(c.source || ''), money(c.due || 0), money(c.paid || 0), money(getCurDue(c)), escHSafe(getStat(c))]),
+            last: `<table class="ap-totals"><tr><td>Total Due</td><td>${money(tDue)}</td></tr><tr><td>Total Paid</td><td>${money(tPaid)}</td></tr><tr class="grand"><td>Total Outstanding</td><td>${money(tOut)}</td></tr></table>`
+          };
+        } else if (reportType === 'manual_collection') {
+          const list = liveCustomers.slice();
+          const tDue = list.reduce((s,c) => s + (c.due || 0), 0);
+          titleLabel = 'Manual Collection Sheet';
+          cfg = {
+            title: 'Manual Collection Sheet',
+            meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', list.length]],
+            pre: '<div class="ap-notes">Fill the “Paid” and “Remaining” columns by hand.</div>',
+            section: 'Collection List',
+            rowH: 28,
+            cols: [
+              { h: '#', w: 5, a: 'center' },
+              { h: 'Name', w: 22 },
+              { h: 'Address', w: 17 },
+              { h: 'Source', w: 8, a: 'center' },
+              { h: 'Opening Due', w: 14, a: 'right' },
+              { h: 'Paid (fill)', w: 17, a: 'right' },
+              { h: 'Remaining (fill)', w: 17, a: 'right' }
+            ],
+            rows: list.map((c, i) => [i + 1, `<strong>${escHSafe(c.name)}</strong>`, escHSafe(c.address || ''), escHSafe(c.source || ''), money(c.due || 0), '', '']),
+            last: `<table class="ap-totals"><tr class="grand"><td>Total Opening Due</td><td>${money(tDue)}</td></tr></table>`
+          };
+        } else if (reportType === 'transaction_statement') {
+          const list = [];
+          liveCustomers.forEach(c => {
+            (c.transactionHistory || []).forEach(t => {
+              list.push({
+                customerName: c.name || 'Unnamed',
+                date: t.date || '',
+                type: t.type || 'Unknown',
+                amount: Number(t.amount) || 0,
+                note: t.note || ''
+              });
+            });
+          });
+          list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          const sum = k => list.filter(t => (t.type || '').toLowerCase().includes(k)).reduce((s, t) => s + (+t.amount || 0), 0);
+          titleLabel = 'Transaction Statement';
+          cfg = {
+            title: 'Transaction Statement',
+            meta: [['Date', new Date().toLocaleDateString('en-GB')], ['Records', list.length]],
+            section: 'Transactions',
+            cols: [
+              { h: '#', w: 5, a: 'center' },
+              { h: 'Date &amp; Time', w: 21 },
+              { h: 'Customer', w: 22 },
+              { h: 'Type', w: 17 },
+              { h: 'Amount', w: 12, a: 'right' },
+              { h: 'Notes' }
+            ],
+            rows: list.map((t, i) => [i + 1, escHSafe(t.date || '—'), `<strong>${escHSafe(t.customerName)}</strong>`, escHSafe(t.type), money(t.amount), escHSafe(t.note || '')]),
+            emptyText: 'No transactions.',
+            last: `<table class="ap-totals"><tr><td>Total Transactions</td><td>${list.length}</td></tr><tr><td>Payments Received</td><td>${money(sum('receive'))}</td></tr><tr><td>Due Added</td><td>${money(sum('due added'))}</td></tr><tr><td>Adjustments</td><td>${money(sum('adjust'))}</td></tr></table>`
+          };
+        } else if (reportType === 'summary_report') {
+          const tc = liveCustomers.length;
+          const tD = liveCustomers.reduce((s, c) => s + (c.due || 0), 0);
+          const tP = liveCustomers.reduce((s, c) => s + (c.paid || 0), 0);
+          const net = liveCustomers.reduce((s, c) => s + getCurDue(c), 0);
+          const cnt = f => liveCustomers.filter(c => f(getStat(c))).length;
+          const pc = n => tc ? Math.round(n / tc * 100) : 0;
+          const wd = cnt(s => s === 'Due' || s === 'Partial Paid');
+          const pa = cnt(s => s === 'Partial Paid');
+          const fp = cnt(s => s === 'Paid');
+          const avg = tc ? net / tc : 0;
+          titleLabel = 'Summary Report';
+          cfg = {
+            title: 'Summary Report',
+            meta: [['Date', new Date().toLocaleDateString('en-GB')]],
+            section: 'Overview',
+            noFill: 1,
+            cols: [
+              { h: 'Metric', w: 70 },
+              { h: 'Value', a: 'right' }
+            ],
+            rows: [
+              ['Total Customers', tc],
+              ['Total Starting Due', money(tD)],
+              ['Total Paid', money(tP)],
+              ['Net Outstanding', money(net)],
+              ['Average Due / Customer', money(avg)]
+            ],
+            last: `<div class="ap-section" style="margin-top:8px">Breakdown</div>
+              <table class="ap-plain" style="margin-top:0"><thead><tr><th style="width:70%">Category</th><th class="right">Count</th><th class="right">%</th></tr></thead><tbody>
+                <tr><td>With Due</td><td class="right">${wd}</td><td class="right">${pc(wd)}%</td></tr>
+                <tr><td>Partial Paid</td><td class="right">${pa}</td><td class="right">${pc(pa)}%</td></tr>
+                <tr><td>Fully Paid</td><td class="right">${fp}</td><td class="right">${pc(fp)}%</td></tr>
+              </tbody></table>`
+          };
+        } else if (reportType === 'customer_statement') {
+          const c = liveCustomers.find(x => String(x.id) === String(params.id));
+          if (!c) throw new Error('Customer not found.');
+          const curDue = getCurDue(c);
+          titleLabel = 'Account Statement';
+          cfg = {
+            title: 'Account Statement',
+            meta: [['Ref', c.id], ['Date', new Date().toLocaleDateString('en-GB')]],
+            info: [
+              ['Customer', `<strong>${escHSafe(c.name)}</strong>${c.phone ? '<br>' + escHSafe(c.phone) : ''}${c.address ? '<br>' + escHSafe(c.address) : ''}`],
+              ['Status', `<strong>${escHSafe(getStat(c))}</strong>`]
+            ],
+            section: 'Account Summary',
+            cols: [
+              { h: 'Description', w: 65 },
+              { h: 'Amount', a: 'right' }
+            ],
+            rows: [
+              ['Total Due', money(c.due || 0)],
+              ['Total Paid', money(c.paid || 0)],
+              ['<strong>Current Outstanding</strong>', `<strong>${money(curDue)}</strong>`]
+            ]
+          };
+        } else if (reportType === 'payment_history') {
+          const c = liveCustomers.find(x => String(x.id) === String(params.id));
+          if (!c) throw new Error('Customer not found.');
+          const tx = c.transactionHistory || [];
+          titleLabel = 'Payment History';
+          cfg = {
+            title: 'Payment History',
+            meta: [['Ref', c.id], ['Date', new Date().toLocaleDateString('en-GB')], ['Records', tx.length]],
+            info: [
+              ['Customer', `<strong>${escHSafe(c.name)}</strong>${c.phone ? '<br>' + escHSafe(c.phone) : ''}${c.address ? '<br>' + escHSafe(c.address) : ''}`],
+              ['Member Since', escHSafe(c.dateAdded || '—')]
+            ],
+            section: 'Transaction Ledger',
+            cols: [
+              { h: '#', w: 6, a: 'center' },
+              { h: 'Date &amp; Time', w: 25 },
+              { h: 'Type', w: 20 },
+              { h: 'Amount', w: 15, a: 'right' },
+              { h: 'Notes' }
+            ],
+            rows: tx.map((t, i) => [i + 1, escHSafe(t.date || ''), escHSafe(t.type || ''), money(t.amount), escHSafe(t.note || '')]),
+            emptyText: 'No transaction history recorded.'
+          };
+        } else {
+          throw new Error('Unknown report type: ' + reportType);
         }
-        renderPublicReportView(container, snap.data());
+
+        renderLiveReport(container, cfg, shop, titleLabel);
       } catch (e) {
-        console.error('Public report view failed:', e);
+        console.error('Public live report view failed:', e);
         container.innerHTML = `<div style="max-width:520px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:40px 24px;">
           <i class="fas fa-triangle-exclamation" style="font-size:48px;color:var(--warning);margin-bottom:16px;pointer-events:none;"></i>
           <h2 style="margin:0 0 8px 0;color:var(--text);font-size:20px;">Could Not Load</h2>
-          <p style="color:var(--muted);margin:0;font-size:13px;">Please check your internet connection and try again.</p>
+          <p style="color:var(--muted);margin:0 0 8px 0;font-size:13px;">${escHSafe(e.message)}</p>
+          <p style="color:var(--muted);margin:0;font-size:12px;">If you copied this link manually, make sure you included the full URL.</p>
         </div>`;
       }
     }
 
-    function renderPublicReportView(container, data) {
-      const cfg = data.cfg || {};
+    function renderLiveReport(container, cfg, shopData, titleLabel) {
       const cols = cfg.cols || [];
       const rows = cfg.rows || [];
       const rowsHTML = rows.map(r =>
@@ -4841,9 +5032,9 @@
         const align = c.a === 'right' ? 'text-align:right;' : c.a === 'center' ? 'text-align:center;' : 'text-align:left;';
         return `<th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);border-bottom:2px solid var(--border);${align}">${c.h}</th>`;
       }).join('');
-      const metaHTML = (cfg.meta || []).map(m => `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:3px;">${m[0]}: <strong style="color:#fff;">${escapeHtml(m[1])}</strong></div>`).join('');
+      const metaHTML = (cfg.meta || []).map(m => `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:3px;">${m[0]}: <strong style="color:#fff;">${escHSafe(m[1])}</strong></div>`).join('');
       const infoHTML = cfg.info && cfg.info.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;padding:18px 24px;border-bottom:1px solid var(--border);">${cfg.info.map(i => `<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;margin-bottom:4px;">${i[0]}</div><div style="font-size:13px;line-height:1.45;">${i[1]}</div></div>`).join('')}</div>` : '';
-      const emptyRow = `<tr><td colspan="${cols.length || 1}" style="padding:24px;text-align:center;color:var(--muted);">${escapeHtml(cfg.emptyText || 'No records.')}</td></tr>`;
+      const emptyRow = `<tr><td colspan="${cols.length || 1}" style="padding:24px;text-align:center;color:var(--muted);">${escHSafe(cfg.emptyText || 'No records.')}</td></tr>`;
 
       container.innerHTML = `
         <div style="max-width:920px;margin:0 auto;">
@@ -4852,29 +5043,29 @@
               <div style="width:38px;height:38px;background:#1f4e79;color:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-shield-halved"></i></div>
               <div style="text-align:left;">
                 <div style="font-size:14px;font-weight:700;color:var(--text);">RGCE SparkDesk</div>
-                <div style="font-size:11px;color:var(--muted);">Report Verification</div>
+                <div style="font-size:11px;color:var(--muted);">Live Report</div>
               </div>
             </div>
           </div>
 
           <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.3px;">${escapeHtml(data.shopName || 'Roza Gift Corner & Electric')}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(data.shopAddress || '')}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Phone: ${escapeHtml(data.shopPhone || '')}</div>
+            <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.3px;">${escHSafe(shopData.shopName || 'Roza Gift Corner & Electric')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escHSafe(shopData.shopAddress || '')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Phone: ${escHSafe(shopData.shopPhone || '')}</div>
           </div>
 
           <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md);">
             <div style="background:#1f4e79;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
               <div>
-                <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:1px;">Report</div>
-                <div style="font-size:20px;font-weight:800;margin-top:2px;">${escapeHtml(cfg.title || 'Report')}</div>
+                <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:1px;">Live Report</div>
+                <div style="font-size:20px;font-weight:800;margin-top:2px;">${escHSafe(titleLabel || cfg.title || 'Report')}</div>
               </div>
               <div style="text-align:right;">${metaHTML}</div>
             </div>
             ${infoHTML}
             ${cfg.pre ? `<div style="padding:12px 24px 0;">${cfg.pre}</div>` : ''}
             <div style="padding:18px 24px;overflow-x:auto;">
-              ${cfg.section ? `<div style="font-size:10px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">${escapeHtml(cfg.section)}</div>` : ''}
+              ${cfg.section ? `<div style="font-size:10px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">${escHSafe(cfg.section)}</div>` : ''}
               <table style="width:100%;border-collapse:collapse;">
                 <thead><tr>${colsHTML}</tr></thead>
                 <tbody>${rowsHTML || emptyRow}</tbody>
@@ -4882,7 +5073,8 @@
             </div>
             ${cfg.last ? `<div style="padding:0 24px 20px;">${cfg.last}</div>` : ''}
             <div style="padding:16px 24px 20px;border-top:1px dashed var(--border);text-align:center;font-size:11px;color:var(--muted);">
-              Verified report from <strong>${escapeHtml(data.shopName || 'Roza Gift Corner & Electric')}</strong>
+              Live report from <strong>${escHSafe(shopData.shopName || 'Roza Gift Corner & Electric')}</strong><br>
+              Data current as of ${new Date().toLocaleString('en-GB')}
             </div>
           </div>
 
@@ -4895,10 +5087,14 @@
 
     function checkPublicInvoiceView() {
       const params = new URLSearchParams(window.location.search);
-      const reportId = params.get('report');
+      const reportType = params.get('report');
       const invNum = params.get('inv');
-      if (reportId) {
-        const show = () => showPublicReportView(reportId);
+
+      if (reportType) {
+        const ownerUid = params.get('owner') || '';
+        const extra = {};
+        params.forEach((v, k) => { if (k !== 'report' && k !== 'owner') extra[k] = v; });
+        const show = () => showPublicReportView(reportType, ownerUid, extra);
         if (window.FB) show();
         else window.addEventListener('firebase-ready', show, { once: true });
         return true;
@@ -4990,7 +5186,7 @@
           </tbody></table>`
         };
         closeModal();
-        printReportWithQR(cfg);
+        printReportWithQR(cfg, { reportUrl: buildLiveReportUrl('summary_report') });
       });
     }
 
@@ -5218,7 +5414,7 @@
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
           <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
-          <strong>App version:</strong> v1.10.5 (Report Publishing + Header QR)
+          <strong>App version:</strong> v1.10.6 (Live Reports)
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -5296,11 +5492,11 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.10.5</p>
+            <p>RGCE SparkDesk v1.10.6</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
-          openModal('Help', '<p>Use the sidebar to navigate. Customer Management and Invoice System are completely separate. Invoices do not affect customer dues. Public QR links let you share invoices without login.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
+          openModal('Help', '<p>Use the sidebar to navigate. Customer Management and Invoice System are completely separate. Invoices do not affect customer dues. Public QR links let you share invoices and reports without login.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         default: showToast('Feature coming soon.', 'info');
       }
@@ -5341,7 +5537,7 @@
       if (!window.FB) { console.error('Firebase not loaded yet'); return false; }
       try {
         setupAuth();
-        console.log('Auth setup complete (v1.10.5)');
+        console.log('Auth setup complete (v1.10.6)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
